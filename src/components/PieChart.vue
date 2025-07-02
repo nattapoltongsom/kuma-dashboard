@@ -16,5 +16,6 @@ const chartOptions = {
 </script>
 
 <template>
-    <Pie :data="chartData" :options="chartOptions" />
+  <div style="max-height: 400px; max-width: 400px; margin: auto;"> <Pie :data="chartData" :options="chartOptions" />
+  </div>
 </template>

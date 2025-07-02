@@ -6,7 +6,6 @@ import PieChart from '../components/PieChart.vue';
 import LineChart from '../components/LineChart.vue';
 import type { ChartData } from 'chart.js';
 
-// ---- Data Structure Interface ----
 interface CampaignSummary {
   no: number;
   campaignName: string;
@@ -101,6 +100,16 @@ const lineChartData = computed<ChartData<'line'>>(() => ({
   }]
 }));
 
+const avgCTRChartData = computed<ChartData<'line'>>(() => ({ // เปลี่ยนจาก 'bar' เป็น 'line'
+  labels: campaigns.value.map(c => c.campaignName),
+  datasets: [{
+    label: 'Average CTR (%)',
+    data: campaigns.value.map(c => c.avgCTR),
+    borderColor: '#FF6384', // กำหนดสีเส้น
+    tension: 0.1 // ทำให้เส้นโค้งมนเล็กน้อย
+  }]
+}));
+
 // ---- Lifecycle Hook ----
 onMounted(async () => {
   try {
@@ -128,7 +137,7 @@ onMounted(async () => {
     <div v-if="error" class="error">{{ error }}</div>
 
     <div v-if="!loading && !error">
-      <div class="grid-container">
+      <div class="grid-container top-rankings-grid">
         <div class="table-container">
           <h2>🏆 Top 5 by Engagement Rate</h2>
           <table>
@@ -173,7 +182,7 @@ onMounted(async () => {
         </div>
       </div>
 
-      <div class="grid-container">
+      <div class="grid-container charts-row">
         <div class="chart-container">
           <h2>Key Metrics Comparison (Bar)</h2>
           <BarChart :chart-data="barChartData" />
@@ -183,13 +192,19 @@ onMounted(async () => {
           <PieChart :chart-data="pieChartData" />
         </div>
       </div>
-      <div class="chart-container" style="margin-top: 2rem;">
-        <h2>Engagement Rate by Reach Trend (Line)</h2>
-        <LineChart :chart-data="lineChartData" />
+      <div class="grid-container charts-row">
+        <div class="chart-container">
+          <h2>Engagement Rate by Reach Trend (Line)</h2>
+          <LineChart :chart-data="lineChartData" />
+        </div>
+        <div class="chart-container">
+          <h2>Average CTR (%) by Campaign</h2>
+          <LineChart :chart-data="avgCTRChartData" /> 
+        </div>
       </div>
-      <div class="grid-container">
-      </div>
-      <div class="table-container">
+      <div class="grid-container charts-row">
+        </div>
+      <div class="table-container all-campaigns-table">
         <h2>📊 All Campaign Data</h2>
         <div>
           <table>
@@ -226,6 +241,6 @@ onMounted(async () => {
           </table>
         </div>
       </div>
-      </div>
+    </div>
   </div>
 </template>
