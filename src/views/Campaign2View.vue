@@ -24,6 +24,15 @@ interface KOLPerformance {
   engagementRateByReach: number;
 }
 
+interface KolSummary {
+  type: string;
+  totalReach: number;
+  totalLike: number;
+  totalComment: number;
+  totalShare: number;
+  totalEngagement: number;
+}
+
 // ---- Component State ----
 const loading = ref(true);
 const error = ref<string | null>(null);
@@ -54,52 +63,163 @@ const processData = (data: string[][]) => {
   }));
 };
 
+const groupedByType = computed<KolSummary[]>(() => {
+  const groups: Record<string, KolSummary> = {};
+
+  for (const kol of kols.value) {
+    if (!groups[kol.type]) {
+      groups[kol.type] = {
+        type: kol.type,
+        totalReach: 0,
+        totalLike: 0,
+        totalComment: 0,
+        totalShare: 0,
+        totalEngagement: 0,
+      };
+    }
+
+    groups[kol.type].totalReach += kol.reach;
+    groups[kol.type].totalLike += kol.like;
+    groups[kol.type].totalComment += kol.comment;
+    groups[kol.type].totalShare += kol.share;
+    groups[kol.type].totalEngagement += kol.totalEngagement;
+  }
+
+  return Object.values(groups);
+});
+
+
 // ---- Top 5 Rankings (Computed Properties) ----
-const topKOLsByEngagementRate = computed(() =>
+const topKOLsByEngagement = computed(() =>
+  [...kols.value]
+    .sort((a, b) => b.totalEngagement - a.totalEngagement)
+    .slice(0, 5)
+);
+
+const topEngagementRateByFollower = computed(() =>
+  [...kols.value]
+    .sort((a, b) => b.engagementRateByFollower - a.engagementRateByFollower)
+    .slice(0, 5)
+);
+
+const topEngagementRateByReach = computed(() =>
   [...kols.value]
     .sort((a, b) => b.engagementRateByReach - a.engagementRateByReach)
     .slice(0, 5)
 );
 
-const topKOLsByReach = computed(() =>
-  [...kols.value]
-    .sort((a, b) => b.reach - a.reach)
-    .slice(0, 5)
-);
-
-const topKOLsByCTR = computed(() =>
-  [...kols.value]
-    .sort((a, b) => b.ctr - a.ctr)
-    .slice(0, 5)
-);
-
 // ---- Chart Data (Computed Properties) ----
-const barChartData = computed<ChartData<'bar'>>(() => ({
-  labels: kols.value.map(k => k.kolName),
-  datasets: [
-    { label: 'Total Engagement', data: kols.value.map(k => k.totalEngagement), backgroundColor: '#36A2EB' },
-    { label: 'Reach', data: kols.value.map(k => k.reach), backgroundColor: '#4BC0C0' },
-  ]
-}));
+const barChartDataTotal = computed<ChartData<'bar'>>(() => {
+  const labels = groupedByType.value.map(g => g.type);
+  return {
+    labels,
+    datasets: [
+      {
+        label: 'Total Reach',
+        backgroundColor: '#4BC0C0',
+        data: groupedByType.value.map(g => g.totalReach),
+      },
+      {
+        label: 'Total Like',
+        backgroundColor: '#FFCE56',
+        data: groupedByType.value.map(g => g.totalLike),
+      },
+      {
+        label: 'Total Comment',
+        backgroundColor: '#FF6384',
+        data: groupedByType.value.map(g => g.totalComment),
+      },
+      {
+        label: 'Total Share',
+        backgroundColor: '#9966FF',
+        data: groupedByType.value.map(g => g.totalShare),
+      },
+    ],
+  };
+});
 
-const pieChartData = computed<ChartData<'pie'>>(() => ({
-  labels: kols.value.map(k => k.kolName),
-  datasets: [{
-    label: 'Total Engagement',
-    data: kols.value.map(k => k.totalEngagement),
-    backgroundColor: ['#41B883', '#E46651', '#00D8FF', '#DD1B16', '#FDB45C', '#949FB1'],
-  }]
-}));
+const barChartDataTotalEngagement = computed<ChartData<'bar'>>(() => {
+  const labels = groupedByType.value.map(g => g.type);
+  return {
+    labels,
+    datasets: [
+      {
+        label: 'Total Engagement',
+        backgroundColor: '#FFCE56',
+        data: groupedByType.value.map(g => g.totalEngagement),
+      }
+    ],
+  };
+});
 
-const lineChartData = computed<ChartData<'line'>>(() => ({
-  labels: kols.value.map(k => k.kolName),
-  datasets: [{
-    label: 'Engagement Rate by Reach (%)',
-    data: kols.value.map(k => k.engagementRateByReach),
-    borderColor: '#42b983',
-    tension: 0.1
-  }]
-}));
+const pieChartDataType = computed<ChartData<'pie'>>(() => {
+  const groupMap: Record<string, number> = {};
+
+  for (const kol of kols.value) {
+    if (!groupMap[kol.type]) {
+      groupMap[kol.type] = 0;
+    }
+    groupMap[kol.type] += 1; // นับจำนวน KOL ต่อ type
+  }
+
+  const labels = Object.keys(groupMap);    // เช่น ['Micro', 'Macro', 'Mega']
+  const data = Object.values(groupMap);    // เช่น [5, 10, 2]
+
+  return {
+    labels,
+    datasets: [{
+      label: 'Number of KOLs by Type',
+      data,
+      backgroundColor: [
+        '#41B883',
+        '#E46651',
+        '#00D8FF',
+        '#DD1B16',
+        '#FDB45C',
+        '#949FB1'
+      ]
+    }]
+  };
+});
+
+const lineChartDataAvgCTRByType = computed<ChartData<'line'>>(() => {
+  const groupMap: Record<string, { sum: number; count: number }> = {};
+
+  for (const kol of kols.value) {
+    if (!groupMap[kol.type]) {
+      groupMap[kol.type] = { sum: 0, count: 0 };
+    }
+    groupMap[kol.type].sum += kol.ctr;
+    groupMap[kol.type].count += 1;
+  }
+
+  const labels = Object.keys(groupMap);
+  const data = labels.map(type => {
+    const { sum, count } = groupMap[type];
+    return count > 0 ? sum / count : 0;
+  });
+
+  return {
+    labels,
+    datasets: [{
+      label: 'Average CTR (%) per Type',
+      data,
+      borderColor: '#ff6384',
+      backgroundColor: '#ffb1c1',
+      tension: 0.1
+    }]
+  };
+});
+
+const currentPage = ref(1);
+const pageSize = 10;
+
+const totalPages = computed(() => Math.ceil(kols.value.length / pageSize));
+
+const paginatedKols = computed(() => {
+  const start = (currentPage.value - 1) * pageSize;
+  return kols.value.slice(start, start + pageSize);
+});
 
 
 // ---- Lifecycle Hook ----
@@ -126,73 +246,79 @@ onMounted(async () => {
 
 <template>
   <div class="page-container">
-    <h1>Campaign 1 Details</h1> <div v-if="loading" class="loading">Loading Data...</div>
+    <h1>Campaign 2 Details</h1> <div v-if="loading" class="loading">Loading Data...</div>
     <div v-if="error" class="error">{{ error }}</div>
 
     <div v-if="!loading && !error">
-      <div class="grid-container">
+      <div class="grid-container top-rankings-grid">
         <div class="table-container">
-          <h2>🏆 Top 5 KOLs by Engagement Rate</h2>
+          <h2>Top 5 KOLs by Engagement</h2>
           <table>
             <thead>
-              <tr><th>KOL</th><th>Rate by Reach</th></tr>
+              <tr><th>KOL</th><th></th></tr>
             </thead>
             <tbody>
-              <tr v-for="item in topKOLsByEngagementRate" :key="item.no">
+              <tr v-for="item in topKOLsByEngagement" :key="item.no">
+                <td>{{ item.kolName }}</td>
+                <td>{{ item.totalEngagement.toLocaleString() }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-container">
+          <h2>Top 5 Engagement rate by follow</h2>
+          <table>
+            <thead>
+              <tr><th>KOL</th><th></th></tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in topEngagementRateByFollower" :key="item.no">
+                <td>{{ item.kolName }}</td>
+                <td>{{ item.engagementRateByFollower.toFixed(2) }}%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-container">
+          <h2>Top 5 Engagement rate by reach</h2>
+          <table>
+            <thead>
+              <tr><th>KOL</th><th></th></tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in topEngagementRateByReach" :key="item.no">
                 <td>{{ item.kolName }}</td>
                 <td>{{ item.engagementRateByReach.toFixed(2) }}%</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="table-container">
-          <h2>🚀 Top 5 KOLs by Reach</h2>
-          <table>
-            <thead>
-              <tr><th>KOL</th><th>Reach</th></tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in topKOLsByReach" :key="item.no">
-                <td>{{ item.kolName }}</td>
-                <td>{{ item.reach.toLocaleString() }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="table-container">
-          <h2>🎯 Top 5 KOLs by CTR</h2>
-          <table>
-            <thead>
-              <tr><th>KOL</th><th>CTR</th></tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in topKOLsByCTR" :key="item.no">
-                <td>{{ item.kolName }}</td>
-                <td>{{ item.ctr.toFixed(2) }}%</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
       </div>
 
-      <div class="grid-container">
+      <div class="grid-container charts-row">
         <div class="chart-container">
-          <h2>KOLs Metrics (Bar)</h2>
-          <BarChart :chart-data="barChartData" />
+          <h2>KOL Type</h2>
+          <PieChart :chart-data="pieChartDataType" />
         </div>
         <div class="chart-container">
-          <h2>Engagement Proportion (Pie)</h2>
-          <PieChart :chart-data="pieChartData" />
+          <h2>Total Engagement</h2>
+          <BarChart :chart-data="barChartDataTotalEngagement" />
         </div>
       </div>
-      <div class="chart-container" style="margin-top: 2rem;">
-        <h2>KOLs Engagement Rate Trend (Line)</h2>
-        <LineChart :chart-data="lineChartData" />
+            <div class="grid-container charts-row">
+        <div class="chart-container">
+          <h2>Total Reach, Like, Share, Comment</h2>
+          <BarChart :chart-data="barChartDataTotal" />
+        </div>
+        <div class="chart-container">
+          <h2>Average CTR (%) by KOL Type</h2>
+        <LineChart :chart-data="lineChartDataAvgCTRByType" />
+        </div>
       </div>
       <div class="grid-container">
       </div>
       <div class="table-container">
-        <h2>📊 All KOL Performance Data</h2>
+        <h2>All KOL Performance Data</h2>
         <table>
           <thead>
             <tr>
@@ -212,7 +338,7 @@ onMounted(async () => {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="kol in kols" :key="kol.no">
+            <tr v-for="kol in paginatedKols" :key="kol.no">
               <td>{{ kol.no }}</td>
               <td>{{ kol.kolName }}</td>
               <td>{{ kol.follower.toLocaleString() }}</td>
@@ -229,6 +355,11 @@ onMounted(async () => {
             </tr>
           </tbody>
         </table>
+        <div class="pagination">
+          <button @click="currentPage--" :disabled="currentPage === 1">Prev</button>
+          <span>Page {{ currentPage }} of {{ totalPages }}</span>
+          <button @click="currentPage++" :disabled="currentPage === totalPages">Next</button>
+        </div>
       </div>
     </div>
   </div>

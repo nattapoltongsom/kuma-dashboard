@@ -32,7 +32,7 @@ const parseNumber = (text: string) => parseFloat(text.replace(/,|%/g, '')) || 0;
 const processData = (data: string[][]) => {
   console.log("data" ,data)
   const headers = data[0];
-  const rows = data.slice(1);
+  const rows = data.slice(0);
 
   campaigns.value = rows.map(row => ({
     no: parseInt(row[0]),
@@ -51,19 +51,19 @@ const processData = (data: string[][]) => {
 };
 
 // ---- Top 5 Rankings (Computed Properties) ----
-const topByEngagementRate = computed(() => 
+const topByEngagement = computed(() => 
+  [...campaigns.value]
+    .sort((a, b) => b.totalEngagement - a.totalEngagement)
+    .slice(0, 5)
+);
+
+const topByReachRate = computed(() =>
   [...campaigns.value]
     .sort((a, b) => b.engagementRateByReach - a.engagementRateByReach)
     .slice(0, 5)
 );
 
-const topByReach = computed(() =>
-  [...campaigns.value]
-    .sort((a, b) => b.totalReach - a.totalReach)
-    .slice(0, 5)
-);
-
-const topByCTR = computed(() =>
+const topByAvgCTR = computed(() =>
   [...campaigns.value]
     .sort((a, b) => b.avgCTR - a.avgCTR)
     .slice(0, 5)
@@ -85,7 +85,7 @@ const pieChartData = computed<ChartData<'pie'>>(() => ({
   labels: campaigns.value.map(c => c.campaignName),
   datasets: [{
     label: 'Engagement Rate by Reach',
-    data: campaigns.value.map(c => c.engagementRateByReach),
+    data: campaigns.value.map(c => c.totalEngagement),
     backgroundColor: ['#41B883', '#E46651', '#00D8FF', '#DD1B16', '#FDB45C'],
   }]
 }));
@@ -139,13 +139,27 @@ onMounted(async () => {
     <div v-if="!loading && !error">
       <div class="grid-container top-rankings-grid">
         <div class="table-container">
-          <h2>🏆 Top 5 by Engagement Rate</h2>
+          <h2>Top 5 Campaign by Engagement</h2>
           <table>
             <thead>
               <tr><th>Campaign</th><th>Rate by Reach</th></tr>
             </thead>
             <tbody>
-              <tr v-for="item in topByEngagementRate" :key="item.no">
+              <tr v-for="item in topByEngagement" :key="item.no">
+                <td>{{ item.campaignName }}</td>
+                <td>{{ item.totalEngagement.toLocaleString() }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-container">
+          <h2>Top 5 by Reach Rate</h2>
+          <table>
+            <thead>
+              <tr><th>Campaign</th><th>Total Reach</th></tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in topByReachRate" :key="item.no">
                 <td>{{ item.campaignName }}</td>
                 <td>{{ item.engagementRateByReach.toFixed(2) }}%</td>
               </tr>
@@ -153,27 +167,13 @@ onMounted(async () => {
           </table>
         </div>
         <div class="table-container">
-          <h2>🚀 Top 5 by Reach</h2>
-          <table>
-            <thead>
-              <tr><th>Campaign</th><th>Total Reach</th></tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in topByReach" :key="item.no">
-                <td>{{ item.campaignName }}</td>
-                <td>{{ item.totalReach.toLocaleString() }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="table-container">
-          <h2>🎯 Top 5 by Avg. CTR</h2>
+          <h2>Top 5 by Avg. CTR</h2>
           <table>
             <thead>
               <tr><th>Campaign</th><th>CTR</th></tr>
             </thead>
             <tbody>
-              <tr v-for="item in topByCTR" :key="item.no">
+              <tr v-for="item in topByAvgCTR" :key="item.no">
                 <td>{{ item.campaignName }}</td>
                 <td>{{ item.avgCTR.toFixed(2) }}%</td>
               </tr>
@@ -184,17 +184,17 @@ onMounted(async () => {
 
       <div class="grid-container charts-row">
         <div class="chart-container">
-          <h2>Key Metrics Comparison (Bar)</h2>
+          <h2>Total Campaign</h2>
           <BarChart :chart-data="barChartData" />
         </div>
         <div class="chart-container">
-          <h2>Engagement Rate Proportion (Pie)</h2>
+          <h2>Engagement Rate</h2>
           <PieChart :chart-data="pieChartData" />
         </div>
       </div>
       <div class="grid-container charts-row">
         <div class="chart-container">
-          <h2>Engagement Rate by Reach Trend (Line)</h2>
+          <h2>Engagement Rate by Reach Trend</h2>
           <LineChart :chart-data="lineChartData" />
         </div>
         <div class="chart-container">
@@ -205,7 +205,7 @@ onMounted(async () => {
       <div class="grid-container charts-row">
         </div>
       <div class="table-container all-campaigns-table">
-        <h2>📊 All Campaign Data</h2>
+        <h2>All Campaign Data</h2>
         <div>
           <table>
             <thead>

@@ -29,6 +29,11 @@ defineProps<{
 const chartOptions = {
   responsive: true,
   maintainAspectRatio: true,
+  scales: {
+    y: {
+      min: 0,
+    }
+  },
 }
 </script>
 

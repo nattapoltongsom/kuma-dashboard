@@ -227,7 +227,7 @@ onMounted(async () => {
   try {
     loading.value = true;
     // **** เปลี่ยน 'Campaign 1' เป็นชื่อชีตของคุณ ****
-    const data = await fetchData('Campaign 1'); 
+    const data = await fetchData('Campaign 5'); 
     console.log("data" , data)
     if (data && data.length > 1) {
       processData(data);
@@ -246,7 +246,7 @@ onMounted(async () => {
 
 <template>
   <div class="page-container">
-    <h1>Campaign 1 Details</h1> <div v-if="loading" class="loading">Loading Data...</div>
+    <h1>Campaign 5 Details</h1> <div v-if="loading" class="loading">Loading Data...</div>
     <div v-if="error" class="error">{{ error }}</div>
 
     <div v-if="!loading && !error">

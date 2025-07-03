@@ -104,7 +104,6 @@ h2 {
     flex-direction: column;
     justify-content: space-between;
     /* เพิ่มหรือแก้ไขบรรทัดนี้ */
-    max-height: 500px; /* หรือค่าที่คุณต้องการ เช่น 400px, 450px */ 
     position: relative; /* สำคัญสำหรับ Chart.js ในบางกรณี */
 }
 
@@ -115,6 +114,18 @@ table {
   margin-top: 1rem;
   font-size: 0.9em; /* Slightly smaller font for dense tables */
 }
+
+.pagination {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 
 th,
 td {

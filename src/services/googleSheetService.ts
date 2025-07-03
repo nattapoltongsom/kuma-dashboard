@@ -16,6 +16,10 @@ const SHEET_GIDS = {
   'Summary': '0',
   'Campaign 1': '998218441', // <--- ใส่ GID ของชีต Campaign 1
   'Campaign 2': '1372471406', // <--- ใส่ GID ของชีต Campaign 2
+  'Campaign 3': '927765979', // <--- ใส่ GID ของชีต Campaign 2
+  'Campaign 4': '1844093623', // <--- ใส่ GID ของชีต Campaign 2
+  'Campaign 5': '900329987', // <--- ใส่ GID ของชีต Campaign 2
+
 };
 
 /**
