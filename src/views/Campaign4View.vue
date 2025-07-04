@@ -246,52 +246,32 @@ onMounted(async () => {
 
 <template>
   <div class="page-container">
-    <h1>Campaign 4 Details</h1> <div v-if="loading" class="loading">Loading Data...</div>
+    <h1>Campaign 4 Details</h1>
+    <div v-if="loading" class="loading">Loading Data...</div>
     <div v-if="error" class="error">{{ error }}</div>
 
     <div v-if="!loading && !error">
       <div class="grid-container top-rankings-grid">
-        <div class="table-container">
+        <div class="ranking-card">
           <h2>Top 5 KOLs by Engagement</h2>
-          <table>
-            <thead>
-              <tr><th>KOL</th><th></th></tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in topKOLsByEngagement" :key="item.no">
-                <td>{{ item.kolName }}</td>
-                <td>{{ item.totalEngagement.toLocaleString() }}</td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="ranking-item" v-for="item in topKOLsByEngagement" :key="item.no">
+            <span class="name">{{ item.kolName }}</span>
+            <span class="value">{{ item.totalEngagement.toLocaleString() }}</span>
+          </div>
         </div>
-        <div class="table-container">
+        <div class="ranking-card">
           <h2>Top 5 Engagement rate by follow</h2>
-          <table>
-            <thead>
-              <tr><th>KOL</th><th></th></tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in topEngagementRateByFollower" :key="item.no">
-                <td>{{ item.kolName }}</td>
-                <td>{{ item.engagementRateByFollower.toFixed(2) }}%</td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="ranking-item" v-for="item in topEngagementRateByFollower" :key="item.no">
+            <span class="name">{{ item.kolName }}</span>
+            <span class="value">{{ item.engagementRateByFollower.toFixed(2) }}%</span>
+          </div>
         </div>
-        <div class="table-container">
+        <div class="ranking-card">
           <h2>Top 5 Engagement rate by reach</h2>
-          <table>
-            <thead>
-              <tr><th>KOL</th><th></th></tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in topEngagementRateByReach" :key="item.no">
-                <td>{{ item.kolName }}</td>
-                <td>{{ item.engagementRateByReach.toFixed(2) }}%</td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="ranking-item" v-for="item in topEngagementRateByReach" :key="item.no">
+            <span class="name">{{ item.kolName }}</span>
+            <span class="value">{{ item.engagementRateByReach.toFixed(2) }}%</span>
+          </div>
         </div>
       </div>
 
@@ -305,18 +285,18 @@ onMounted(async () => {
           <BarChart :chart-data="barChartDataTotalEngagement" />
         </div>
       </div>
-            <div class="grid-container charts-row">
+      
+      <div class="grid-container charts-row">
         <div class="chart-container">
           <h2>Total Reach, Like, Share, Comment</h2>
           <BarChart :chart-data="barChartDataTotal" />
         </div>
         <div class="chart-container">
           <h2>Average CTR (%) by KOL Type</h2>
-        <LineChart :chart-data="lineChartDataAvgCTRByType" />
+          <LineChart :chart-data="lineChartDataAvgCTRByType" />
         </div>
       </div>
-      <div class="grid-container">
-      </div>
+      
       <div class="table-container">
         <h2>All KOL Performance Data</h2>
         <table>

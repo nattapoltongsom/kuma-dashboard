@@ -138,47 +138,26 @@ onMounted(async () => {
 
     <div v-if="!loading && !error">
       <div class="grid-container top-rankings-grid">
-        <div class="table-container">
+        <div class="ranking-card">
           <h2>Top 5 Campaign by Engagement</h2>
-          <table>
-            <thead>
-              <tr><th>Campaign</th><th>Rate by Reach</th></tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in topByEngagement" :key="item.no">
-                <td>{{ item.campaignName }}</td>
-                <td>{{ item.totalEngagement.toLocaleString() }}</td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="ranking-item" v-for="item in topByEngagement" :key="item.no">
+            <span class="name">{{ item.campaignName }}</span>
+            <span class="value">{{ item.totalEngagement.toLocaleString() }}</span>
+          </div>
         </div>
-        <div class="table-container">
+        <div class="ranking-card">
           <h2>Top 5 by Reach Rate</h2>
-          <table>
-            <thead>
-              <tr><th>Campaign</th><th>Total Reach</th></tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in topByReachRate" :key="item.no">
-                <td>{{ item.campaignName }}</td>
-                <td>{{ item.engagementRateByReach.toFixed(2) }}%</td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="ranking-item" v-for="item in topByReachRate" :key="item.no">
+            <span class="name">{{ item.campaignName }}</span>
+            <span class="value">{{ item.engagementRateByReach.toFixed(2) }}%</span>
+          </div>
         </div>
-        <div class="table-container">
+        <div class="ranking-card">
           <h2>Top 5 by Avg. CTR</h2>
-          <table>
-            <thead>
-              <tr><th>Campaign</th><th>CTR</th></tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in topByAvgCTR" :key="item.no">
-                <td>{{ item.campaignName }}</td>
-                <td>{{ item.avgCTR.toFixed(2) }}%</td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="ranking-item" v-for="item in topByAvgCTR" :key="item.no">
+            <span class="name">{{ item.campaignName }}</span>
+            <span class="value">{{ item.avgCTR.toFixed(2) }}%</span>
+          </div>
         </div>
       </div>
 
@@ -192,6 +171,7 @@ onMounted(async () => {
           <PieChart :chart-data="pieChartData" />
         </div>
       </div>
+      
       <div class="grid-container charts-row">
         <div class="chart-container">
           <h2>Engagement Rate by Reach Trend</h2>
@@ -202,44 +182,41 @@ onMounted(async () => {
           <LineChart :chart-data="avgCTRChartData" /> 
         </div>
       </div>
-      <div class="grid-container charts-row">
-        </div>
-      <div class="table-container all-campaigns-table">
+      
+      <div class="table-container">
         <h2>All Campaign Data</h2>
-        <div>
-          <table>
-            <thead>
-              <tr>
-                <th>No.</th>
-                <th>Campaign Name</th>
-                <th>Info Count</th>
-                <th>Platform</th>
-                <th>Total Reach</th>
-                <th>Total Likes</th>
-                <th>Total Comments</th>
-                <th>Total Shares</th>
-                <th>Avg. CTR (%)</th>
-                <th>Total Engagement</th>
-                <th>ER by Reach (%)</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="campaign in campaigns" :key="campaign.no">
-                <td>{{ campaign.no }}</td>
-                <td>{{ campaign.campaignName }}</td>
-                <td>{{ campaign.infoCount }}</td>
-                <td>{{ campaign.platform }}</td>
-                <td>{{ campaign.totalReach.toLocaleString() }}</td>
-                <td>{{ campaign.totalLike.toLocaleString() }}</td>
-                <td>{{ campaign.totalComment.toLocaleString() }}</td>
-                <td>{{ campaign.totalShare.toLocaleString() }}</td>
-                <td>{{ campaign.avgCTR.toFixed(2) }}</td>
-                <td>{{ campaign.totalEngagement.toLocaleString() }}</td>
-                <td>{{ campaign.engagementRateByReach.toFixed(2) }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>No.</th>
+              <th>Campaign Name</th>
+              <th>Info Count</th>
+              <th>Platform</th>
+              <th>Total Reach</th>
+              <th>Total Likes</th>
+              <th>Total Comments</th>
+              <th>Total Shares</th>
+              <th>Avg. CTR (%)</th>
+              <th>Total Engagement</th>
+              <th>ER by Reach (%)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="campaign in campaigns" :key="campaign.no">
+              <td>{{ campaign.no }}</td>
+              <td>{{ campaign.campaignName }}</td>
+              <td>{{ campaign.infoCount }}</td>
+              <td>{{ campaign.platform }}</td>
+              <td>{{ campaign.totalReach.toLocaleString() }}</td>
+              <td>{{ campaign.totalLike.toLocaleString() }}</td>
+              <td>{{ campaign.totalComment.toLocaleString() }}</td>
+              <td>{{ campaign.totalShare.toLocaleString() }}</td>
+              <td>{{ campaign.avgCTR.toFixed(2) }}</td>
+              <td>{{ campaign.totalEngagement.toLocaleString() }}</td>
+              <td>{{ campaign.engagementRateByReach.toFixed(2) }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
