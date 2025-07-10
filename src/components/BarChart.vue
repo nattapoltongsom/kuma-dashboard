@@ -12,6 +12,15 @@ defineProps<{
 const chartOptions = {
   responsive: true,
   maintainAspectRatio: true,
+  plugins: {
+    legend: {
+      display: true,
+      position: 'bottom' as const,
+    },
+    datalabels: {
+      display: false,
+    },
+  },
 };
 </script>
 

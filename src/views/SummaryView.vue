@@ -57,64 +57,48 @@ const topByEngagement = computed(() =>
     .slice(0, 5)
 );
 
-const topByReachRate = computed(() =>
-  [...campaigns.value]
-    .sort((a, b) => b.engagementRateByReach - a.engagementRateByReach)
-    .slice(0, 5)
-);
+const totalSummary = computed(() => {
+  return {
+    totalReach: campaigns.value.reduce((sum, c) => sum + c.totalReach, 0),
+    totalLike: campaigns.value.reduce((sum, c) => sum + c.totalLike, 0),
+    totalComment: campaigns.value.reduce((sum, c) => sum + c.totalComment, 0),
+    totalShare: campaigns.value.reduce((sum, c) => sum + c.totalShare, 0),
+  };
+});
 
-const topByAvgCTR = computed(() =>
-  [...campaigns.value]
-    .sort((a, b) => b.avgCTR - a.avgCTR)
-    .slice(0, 5)
-);
-
-// ---- Chart Data (Computed Properties) ----
 const barChartData = computed<ChartData<'bar'>>(() => ({
   labels: campaigns.value.map(c => c.campaignName),
   datasets: [
-    { label: 'Total Engagement', data: campaigns.value.map(c => c.totalEngagement), backgroundColor: '#36A2EB' },
-    { label: 'Total Reach', data: campaigns.value.map(c => c.totalReach), backgroundColor: '#4BC0C0' },
-    { label: 'Total Comment', data: campaigns.value.map(c => c.totalComment), backgroundColor: '#FFCE56' },
-    { label: 'Total Like', data: campaigns.value.map(c => c.totalLike), backgroundColor: '#FF9F40' },
-    { label: 'Total Share', data: campaigns.value.map(c => c.totalShare), backgroundColor: '#FF6384' },
+    { label: 'Engagement', data: campaigns.value.map(c => c.totalEngagement), backgroundColor: '#36A2EB' },
+    { label: 'Reach', data: campaigns.value.map(c => c.totalReach), backgroundColor: '#4BC0C0' },
+    { label: 'Comment', data: campaigns.value.map(c => c.totalComment), backgroundColor: '#FFCE56' },
+    { label: 'Like', data: campaigns.value.map(c => c.totalLike), backgroundColor: '#FF9F40' },
+    { label: 'Share', data: campaigns.value.map(c => c.totalShare), backgroundColor: '#FF6384' },
   ]
 }));
 
-const pieChartData = computed<ChartData<'pie'>>(() => ({
+const pieChartDataEngagementRatio = computed<ChartData<'pie'>>(() => ({
   labels: campaigns.value.map(c => c.campaignName),
   datasets: [{
-    label: 'Engagement Rate by Reach',
+    label: 'Total Engagement',
     data: campaigns.value.map(c => c.totalEngagement),
     backgroundColor: ['#41B883', '#E46651', '#00D8FF', '#DD1B16', '#FDB45C'],
   }]
 }));
 
-const lineChartData = computed<ChartData<'line'>>(() => ({
+const avgCTRChartData = computed<ChartData<'line'>>(() => ({ 
   labels: campaigns.value.map(c => c.campaignName),
   datasets: [{
-    label: 'Engagement Rate by Reach (%)',
-    data: campaigns.value.map(c => c.engagementRateByReach),
-    borderColor: '#42b983',
-    tension: 0.1
-  }]
-}));
-
-const avgCTRChartData = computed<ChartData<'line'>>(() => ({ // เปลี่ยนจาก 'bar' เป็น 'line'
-  labels: campaigns.value.map(c => c.campaignName),
-  datasets: [{
-    label: 'Average CTR (%)',
+    label: 'CTR(%)',
     data: campaigns.value.map(c => c.avgCTR),
-    borderColor: '#FF6384', // กำหนดสีเส้น
-    tension: 0.1 // ทำให้เส้นโค้งมนเล็กน้อย
+    borderColor: '#FF6384', 
+    tension: 0.3 
   }]
 }));
 
-// ---- Lifecycle Hook ----
 onMounted(async () => {
   try {
     loading.value = true;
-    // เปลี่ยน 'Summary' เป็นชื่อชีตของคุณ
     const data = await fetchData('Summary'); 
     if (data && data.length > 1) {
       processData(data);
@@ -139,81 +123,91 @@ onMounted(async () => {
     <div v-if="!loading && !error">
       <div class="grid-container top-rankings-grid">
         <div class="ranking-card">
+          <h2>Top 5 Engagement ratio</h2>
+          <PieChart :chart-data="pieChartDataEngagementRatio" />
+        </div>
+        <div class="ranking-card">
           <h2>Top 5 Campaign by Engagement</h2>
-          <div class="ranking-item" v-for="item in topByEngagement" :key="item.no">
+          <router-link
+              v-for="item in topByEngagement"
+              :key="item.no"
+              class="ranking-item"
+              :to="`/${item.campaignName.toLowerCase().replace(/\s+/g, '-')}`"
+            >
             <span class="name">{{ item.campaignName }}</span>
             <span class="value">{{ item.totalEngagement.toLocaleString() }}</span>
-          </div>
-        </div>
-        <div class="ranking-card">
-          <h2>Top 5 by Reach Rate</h2>
-          <div class="ranking-item" v-for="item in topByReachRate" :key="item.no">
-            <span class="name">{{ item.campaignName }}</span>
-            <span class="value">{{ item.engagementRateByReach.toFixed(2) }}%</span>
-          </div>
-        </div>
-        <div class="ranking-card">
-          <h2>Top 5 by Avg. CTR</h2>
-          <div class="ranking-item" v-for="item in topByAvgCTR" :key="item.no">
-            <span class="name">{{ item.campaignName }}</span>
-            <span class="value">{{ item.avgCTR.toFixed(2) }}%</span>
-          </div>
+          </router-link>
         </div>
       </div>
 
       <div class="grid-container charts-row">
         <div class="chart-container">
-          <h2>Total Campaign</h2>
+          <h2>Total by campaign</h2>
           <BarChart :chart-data="barChartData" />
         </div>
         <div class="chart-container">
-          <h2>Engagement Rate</h2>
-          <PieChart :chart-data="pieChartData" />
+          <h2>CTR (%) by campaign</h2>
+          <LineChart :chart-data="avgCTRChartData" /> 
         </div>
       </div>
-      
-      <div class="grid-container charts-row">
-        <div class="chart-container">
-          <h2>Engagement Rate by Reach Trend</h2>
-          <LineChart :chart-data="lineChartData" />
+
+      <div class="summary-cards-grid">
+        <div class="summary-card" style="border-top-color: var(--pastel-green);">
+          <h3>Total Reach</h3>
+          <p class="summary-value">{{ totalSummary.totalReach.toLocaleString() }}</p>
         </div>
-        <div class="chart-container">
-          <h2>Average CTR (%) by Campaign</h2>
-          <LineChart :chart-data="avgCTRChartData" /> 
+        <div class="summary-card" style="border-top-color: var(--pastel-blue);">
+          <h3>Total Likes</h3>
+          <p class="summary-value">{{ totalSummary.totalLike.toLocaleString() }}</p>
+        </div>
+        <div class="summary-card" style="border-top-color: var(--pastel-pink);">
+          <h3>Total Comments</h3>
+          <p class="summary-value">{{ totalSummary.totalComment.toLocaleString() }}</p>
+        </div>
+        <div class="summary-card" style="border-top-color: var(--pastel-yellow);">
+          <h3>Total Shares</h3>
+          <p class="summary-value">{{ totalSummary.totalShare.toLocaleString() }}</p>
         </div>
       </div>
       
       <div class="table-container">
-        <h2>All Campaign Data</h2>
+        <h2>Campaign Data</h2>
         <table>
           <thead>
             <tr>
               <th>No.</th>
-              <th>Campaign Name</th>
-              <th>Info Count</th>
+              <th>Name</th>
+              <th>Total Kols</th>
               <th>Platform</th>
               <th>Total Reach</th>
               <th>Total Likes</th>
               <th>Total Comments</th>
               <th>Total Shares</th>
-              <th>Avg. CTR (%)</th>
               <th>Total Engagement</th>
               <th>ER by Reach (%)</th>
+              <th>CTR (%)</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="campaign in campaigns" :key="campaign.no">
               <td>{{ campaign.no }}</td>
-              <td>{{ campaign.campaignName }}</td>
+              <td>
+                <router-link
+                  :to="`/${campaign.campaignName.toLowerCase().replace(/\s+/g, '-')}`"
+                  class="campaign-link"
+                >
+                  {{ campaign.campaignName }}
+                </router-link>
+              </td>
               <td>{{ campaign.infoCount }}</td>
               <td>{{ campaign.platform }}</td>
               <td>{{ campaign.totalReach.toLocaleString() }}</td>
               <td>{{ campaign.totalLike.toLocaleString() }}</td>
               <td>{{ campaign.totalComment.toLocaleString() }}</td>
               <td>{{ campaign.totalShare.toLocaleString() }}</td>
-              <td>{{ campaign.avgCTR.toFixed(2) }}</td>
               <td>{{ campaign.totalEngagement.toLocaleString() }}</td>
-              <td>{{ campaign.engagementRateByReach.toFixed(2) }}</td>
+              <td>{{ campaign.engagementRateByReach.toFixed(2) }}%</td>
+              <td>{{ campaign.avgCTR.toFixed(2) }}%</td>
             </tr>
           </tbody>
         </table>

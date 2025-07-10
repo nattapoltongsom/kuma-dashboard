@@ -116,6 +116,12 @@ h2 {
 }
 
 /* Top 5 Rankings - Card Style */
+.top-rankings-grid-summary {
+  display: grid;
+  grid-template-columns: 40% 60%;
+  gap: 1.5rem;
+}
+
 .top-rankings-grid {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
@@ -153,8 +159,18 @@ h2 {
 .ranking-item {
   display: flex;
   justify-content: space-between;
-  padding: 10px 0;
-  border-bottom: 1px solid #eee;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--pastel-green);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  transition: color 0.2s ease;
+  text-decoration: none; /* ปิด underline หากใช้กับ router-link */
+}
+
+.ranking-item:hover {
+  background-color: var(--pastel-mint);
 }
 
 .ranking-item:last-child {
@@ -288,6 +304,17 @@ tbody tr:hover {
   }
 }
 
+.campaign-link {
+  color: var(--text-dark);
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.campaign-link:hover {
+  color: #2a8b75; /* เขียวเข้มขึ้นนิด */
+  text-decoration: underline;
+}
 @media (max-width: 480px) {
   .page-container {
     padding: 0 10px;
@@ -304,5 +331,54 @@ tbody tr:hover {
   th, td {
     padding: 8px;
     font-size: 0.8em;
+  }
+}
+
+.summary-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.summary-card {
+  background: var(--white);
+  border-radius: 10px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+  border-top: 4px solid;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: default;
+}
+
+.summary-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+.summary-card h3 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-medium);
+  font-weight: 600;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.summary-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .summary-cards-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
   }
 }
