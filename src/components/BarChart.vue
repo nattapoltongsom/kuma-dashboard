@@ -12,14 +12,25 @@ defineProps<{
 const chartOptions = {
   responsive: true,
   maintainAspectRatio: true,
+  scales: {
+    x: {
+      ticks: {
+        maxRotation: 45,
+        minRotation: 45,
+        autoSkip: false,
+      },
+    },
+  },
   plugins: {
     legend: {
       display: true,
-      position: 'bottom' as const,
+      position: 'top' as const,
     },
     datalabels: {
-      display: false,
-    },
+      display: true,
+      rotation: 90,    
+      align: 'top' as const
+    }
   },
 };
 </script>

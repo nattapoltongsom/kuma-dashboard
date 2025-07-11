@@ -9,12 +9,12 @@ const routes = [
   },
   {
     path: '/campaign-1',
-    name: 'Campaign1',
+    name: 'Unbox',
     component: () => import('../views/Campaign1View.vue')
   },
   {
     path: '/campaign-2',
-    name: 'Campaign2',
+    name: 'Kato',
     component: () => import('../views/Campaign2View.vue')
   },
     {

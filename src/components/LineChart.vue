@@ -33,31 +33,43 @@ const chartOptions: ChartOptions<'line'> = {
   responsive: true,
   maintainAspectRatio: true,
   scales: {
-    y: {
+    x: {
+      ticks: {
+        maxRotation: 45,
+        minRotation: 45,
+        autoSkip: false,  // เลือกว่าจะข้าม label หรือไม่
+      },
+    },
+y: {
       min: 0,
+      max: 20,  // กำหนด max เป็น 20
+      ticks: {
+        stepSize: 4, // ช่องไฟ 5 หน่วย
+      },
     },
   },
   plugins: {
     datalabels: {
-      align: 'top',    // ให้ label อยู่เหนือจุด
-      anchor: 'end',   // ติดปลายจุด (ถ้าชอบตรงกลางเปลี่ยนเป็น 'center')
+      align: 'top',
+      anchor: 'end',
       color: '#444',
       font: {
         weight: 'bold',
         size: 12,
       },
       formatter: (value: number) => value.toString(),
-      offset: 4,       // เลื่อน label ขึ้นเล็กน้อยให้ไม่ชนจุด
+      offset: 4,
     },
     legend: {
       display: true,
-      position: 'bottom',  
+      position: 'top',  
     },
     tooltip: {
       enabled: true,
     },
   },
 }
+
 </script>
 
 <template>

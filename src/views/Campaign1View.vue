@@ -2,17 +2,18 @@
 import { ref, onMounted, computed } from 'vue';
 import { fetchData } from '../services/googleSheetService';
 import BarChart from '../components/BarChart.vue';
-import PieChart from '../components/PieChart.vue';
 import LineChart from '../components/LineChart.vue';
 import type { ChartData } from 'chart.js';
 
-// ---- Data Structure Interface ----
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import autoTable from 'jspdf-autotable';
+
 interface KOLPerformance {
   no: number;
   kolName: string;
   follower: number;
   platform: string;
-  type: string;
   link: string;
   reach: number;
   like: number;
@@ -20,285 +21,241 @@ interface KOLPerformance {
   share: number;
   ctr: number;
   totalEngagement: number;
-  engagementRateByFollower: number;
-  engagementRateByReach: number;
 }
 
-interface KolSummary {
-  type: string;
-  totalReach: number;
-  totalLike: number;
-  totalComment: number;
-  totalShare: number;
-  totalEngagement: number;
-}
-
-// ---- Component State ----
 const loading = ref(true);
 const error = ref<string | null>(null);
 const kols = ref<KOLPerformance[]>([]);
 
-// ---- Data Processing ----
 const parseNumber = (text: string) => parseFloat(text.replace(/,|%/g, '')) || 0;
 
 const processData = (data: string[][]) => {
-  const headers = data[0];
-  const rows = data.slice(1);
-  console.log("rows" , rows)
+  const rows = data.slice(0);
   kols.value = rows.map(row => ({
     no: parseInt(row[0]),
     kolName: row[1],
     follower: parseNumber(row[2]),
     platform: row[3],
-    type: row[4],
-    link: row[5],
-    reach: parseNumber(row[6]),
-    like: parseNumber(row[7]),
-    comment: parseNumber(row[8]),
-    share: parseNumber(row[9]),
+    link: row[4],
+    reach: parseNumber(row[5]),
+    like: parseNumber(row[6]),
+    comment: parseNumber(row[7]),
+    share: parseNumber(row[8]),
+    totalEngagement: parseNumber(row[9]),
     ctr: parseNumber(row[10]),
-    totalEngagement: parseNumber(row[11]),
-    engagementRateByFollower: parseNumber(row[12]),
-    engagementRateByReach: parseNumber(row[13]),
   }));
 };
 
-const groupedByType = computed<KolSummary[]>(() => {
-  const groups: Record<string, KolSummary> = {};
-
-  for (const kol of kols.value) {
-    if (!groups[kol.type]) {
-      groups[kol.type] = {
-        type: kol.type,
-        totalReach: 0,
-        totalLike: 0,
-        totalComment: 0,
-        totalShare: 0,
-        totalEngagement: 0,
-      };
-    }
-
-    groups[kol.type].totalReach += kol.reach;
-    groups[kol.type].totalLike += kol.like;
-    groups[kol.type].totalComment += kol.comment;
-    groups[kol.type].totalShare += kol.share;
-    groups[kol.type].totalEngagement += kol.totalEngagement;
-  }
-
-  return Object.values(groups);
-});
-
-
-// ---- Top 5 Rankings (Computed Properties) ----
 const topKOLsByEngagement = computed(() =>
-  [...kols.value]
-    .sort((a, b) => b.totalEngagement - a.totalEngagement)
-    .slice(0, 5)
+  [...kols.value].sort((a, b) => b.totalEngagement - a.totalEngagement).slice(0, 5)
 );
 
-const topEngagementRateByFollower = computed(() =>
-  [...kols.value]
-    .sort((a, b) => b.engagementRateByFollower - a.engagementRateByFollower)
-    .slice(0, 5)
-);
+const colorPalette = [
+  '#b8e0d2', '#d6eaff', '#ffd6e0', '#e8d6ff', '#fff2d6', '#d6f5e8',
+];
 
-const topEngagementRateByReach = computed(() =>
-  [...kols.value]
-    .sort((a, b) => b.engagementRateByReach - a.engagementRateByReach)
-    .slice(0, 5)
-);
+const barChartDataKolEngagement = computed<ChartData<'bar'>>(() => ({
+  labels: kols.value.map(g => g.kolName),
+  datasets: [{
+    label: 'Total Engagement',
+    backgroundColor: colorPalette,
+    data: kols.value.map(g => g.totalEngagement),
+  }],
+}));
 
-// ---- Chart Data (Computed Properties) ----
-const barChartDataTotal = computed<ChartData<'bar'>>(() => {
-  const labels = groupedByType.value.map(g => g.type);
-  return {
-    labels,
-    datasets: [
-      {
-        label: 'Total Reach',
-        backgroundColor: '#4BC0C0',
-        data: groupedByType.value.map(g => g.totalReach),
-      },
-      {
-        label: 'Total Like',
-        backgroundColor: '#FFCE56',
-        data: groupedByType.value.map(g => g.totalLike),
-      },
-      {
-        label: 'Total Comment',
-        backgroundColor: '#FF6384',
-        data: groupedByType.value.map(g => g.totalComment),
-      },
-      {
-        label: 'Total Share',
-        backgroundColor: '#9966FF',
-        data: groupedByType.value.map(g => g.totalShare),
-      },
-    ],
-  };
-});
+const lineChartDataKolCTR = computed<ChartData<'line'>>(() => ({
+  labels: kols.value.map(g => g.kolName),
+  datasets: [{
+    label: 'CTR (%)',
+    data: kols.value.map(g => g.ctr),
+    borderColor: '#ff6384',
+    backgroundColor: '#ffb1c1',
+    tension: 0.1,
+  }],
+}));
 
-const barChartDataTotalEngagement = computed<ChartData<'bar'>>(() => {
-  const labels = groupedByType.value.map(g => g.type);
-  return {
-    labels,
-    datasets: [
-      {
-        label: 'Total Engagement',
-        backgroundColor: '#FFCE56',
-        data: groupedByType.value.map(g => g.totalEngagement),
-      }
-    ],
-  };
-});
+const totalSummary = computed(() => ({
+  totalReach: kols.value.reduce((sum, c) => sum + c.reach, 0),
+  totalLike: kols.value.reduce((sum, c) => sum + c.like, 0),
+  totalComment: kols.value.reduce((sum, c) => sum + c.comment, 0),
+  totalShare: kols.value.reduce((sum, c) => sum + c.share, 0),
+  totalEngagement: kols.value.reduce((sum, c) => sum + c.totalEngagement, 0),
+}));
 
-const pieChartDataType = computed<ChartData<'pie'>>(() => {
-  const groupMap: Record<string, number> = {};
-
-  for (const kol of kols.value) {
-    if (!groupMap[kol.type]) {
-      groupMap[kol.type] = 0;
-    }
-    groupMap[kol.type] += 1; // นับจำนวน KOL ต่อ type
-  }
-
-  const labels = Object.keys(groupMap);    // เช่น ['Micro', 'Macro', 'Mega']
-  const data = Object.values(groupMap);    // เช่น [5, 10, 2]
-
-  return {
-    labels,
-    datasets: [{
-      label: 'Number of KOLs by Type',
-      data,
-      backgroundColor: [
-        '#41B883',
-        '#E46651',
-        '#00D8FF',
-        '#DD1B16',
-        '#FDB45C',
-        '#949FB1'
-      ]
-    }]
-  };
-});
-
-const lineChartDataAvgCTRByType = computed<ChartData<'line'>>(() => {
-  const groupMap: Record<string, { sum: number; count: number }> = {};
-
-  for (const kol of kols.value) {
-    if (!groupMap[kol.type]) {
-      groupMap[kol.type] = { sum: 0, count: 0 };
-    }
-    groupMap[kol.type].sum += kol.ctr;
-    groupMap[kol.type].count += 1;
-  }
-
-  const labels = Object.keys(groupMap);
-  const data = labels.map(type => {
-    const { sum, count } = groupMap[type];
-    return count > 0 ? sum / count : 0;
-  });
-
-  return {
-    labels,
-    datasets: [{
-      label: 'Average CTR (%) per Type',
-      data,
-      borderColor: '#ff6384',
-      backgroundColor: '#ffb1c1',
-      tension: 0.1
-    }]
-  };
-});
-
-const currentPage = ref(1);
-const pageSize = 10;
-
-const totalPages = computed(() => Math.ceil(kols.value.length / pageSize));
-
-const paginatedKols = computed(() => {
-  const start = (currentPage.value - 1) * pageSize;
-  return kols.value.slice(start, start + pageSize);
-});
-
-
-// ---- Lifecycle Hook ----
 onMounted(async () => {
   try {
     loading.value = true;
-    // **** เปลี่ยน 'Campaign 1' เป็นชื่อชีตของคุณ ****
-    const data = await fetchData('Campaign 1'); 
-    console.log("data" , data)
+    const data = await fetchData('Campaign 1');
     if (data && data.length > 1) {
       processData(data);
     } else {
       error.value = 'No data found.';
     }
-  } catch (err) {
-    console.log("Failed to load data." , err)
+  } catch {
     error.value = 'Failed to load data.';
   } finally {
     loading.value = false;
   }
 });
 
+const exportFullPagePDF = async () => {
+  try {
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+
+    // หน้า 1: summary + top 5
+    const summaryAndTop5El = document.querySelector('#summary-and-top5') as HTMLElement | null;
+    if (!summaryAndTop5El) {
+      alert('ไม่พบส่วน summary และ top 5');
+      return;
+    }
+    const canvasSummaryTop5 = await html2canvas(summaryAndTop5El, { scale: 2 });
+    const imgDataSummaryTop5 = canvasSummaryTop5.toDataURL('image/png');
+    const imgPropsSummaryTop5 = pdf.getImageProperties(imgDataSummaryTop5);
+    const imgWidthSummaryTop5 = pdfWidth - 10;
+    const imgHeightSummaryTop5 = (imgPropsSummaryTop5.height * imgWidthSummaryTop5) / imgPropsSummaryTop5.width;
+    pdf.addImage(imgDataSummaryTop5, 'PNG', 5, 5, imgWidthSummaryTop5, imgHeightSummaryTop5);
+
+    // หน้า 2: กราฟ CTR + Bar รวมหน้าเดียว
+    const chartsEl = document.querySelector('#charts') as HTMLElement | null;
+    if (!chartsEl) {
+      alert('ไม่พบส่วนกราฟ');
+      return;
+    }
+    pdf.addPage();
+    const canvasCharts = await html2canvas(chartsEl, { scale: 2 });
+    const imgDataCharts = canvasCharts.toDataURL('image/png');
+    const imgPropsCharts = pdf.getImageProperties(imgDataCharts);
+    const imgWidthCharts = pdfWidth - 10;
+    const imgHeightCharts = (imgPropsCharts.height * imgWidthCharts) / imgPropsCharts.width;
+    pdf.addImage(imgDataCharts, 'PNG', 5, 5, imgWidthCharts, imgHeightCharts);
+
+    // หน้า 3: ตารางข้อมูลทั้งหมด (ไม่แบ่งหน้า)
+    pdf.addPage();
+
+    const head = [[
+      'No.',
+      'KOL Name',
+      'Followers',
+      'Platform',
+      'Reach',
+      'Likes',
+      'Comments',
+      'Shares',
+      'Total Engagement',
+      'CTR (%)',
+    ]];
+
+    const body = kols.value.map(kol => [
+      kol.no,
+      kol.kolName,
+      kol.follower.toLocaleString(),
+      kol.platform,
+      kol.reach.toLocaleString(),
+      kol.like.toLocaleString(),
+      kol.comment.toLocaleString(),
+      kol.share.toLocaleString(),
+      kol.totalEngagement.toLocaleString(),
+      kol.ctr.toFixed(2),
+    ]);
+
+    autoTable(pdf, {
+      head,
+      body,
+      startY: 10,
+      styles: { fontSize: 7 },
+      headStyles: { fillColor: [100, 100, 255] },
+      margin: { left: 5, right: 5 },
+      pageBreak: 'auto',
+    });
+
+    pdf.save('Full_KOL_Report.pdf');
+  } catch (error) {
+    console.error('Export PDF failed:', error);
+  }
+};
 </script>
 
 <template>
   <div class="page-container">
-    <h1>Campaign 1 Details</h1>
+    <h1>UNBOX Details</h1>
+
+    <div class="export-button-wrapper">
+      <button @click="exportFullPagePDF" class="btn-export">Export Full Report PDF</button>
+    </div>
+
     <div v-if="loading" class="loading">Loading Data...</div>
     <div v-if="error" class="error">{{ error }}</div>
 
     <div v-if="!loading && !error">
-      <div class="grid-container top-rankings-grid">
-        <div class="ranking-card">
+      <!-- หน้า 1: summary + top 5 -->
+      <div id="summary-and-top5">
+        <div class="summary-cards-grid">
+          <div class="summary-card" style="border-top-color: var(--pastel-yellow);">
+            <h3>Total Engagement</h3>
+            <p class="summary-value">{{ totalSummary.totalEngagement.toLocaleString() }}</p>
+          </div>
+          <div class="summary-card" style="border-top-color: var(--pastel-green);">
+            <h3>Total Reach</h3>
+            <p class="summary-value">{{ totalSummary.totalReach.toLocaleString() }}</p>
+          </div>
+          <div class="summary-card" style="border-top-color: var(--pastel-blue);">
+            <h3>Total Likes</h3>
+            <p class="summary-value">{{ totalSummary.totalLike.toLocaleString() }}</p>
+          </div>
+          <div class="summary-card" style="border-top-color: var(--pastel-pink);">
+            <h3>Total Comments</h3>
+            <p class="summary-value">{{ totalSummary.totalComment.toLocaleString() }}</p>
+          </div>
+          <div class="summary-card" style="border-top-color: var(--pastel-yellow);">
+            <h3>Total Shares</h3>
+            <p class="summary-value">{{ totalSummary.totalShare.toLocaleString() }}</p>
+          </div>
+        </div>
+
+        <div class="ranking-card" style="margin-top: 20px;">
           <h2>Top 5 KOLs by Engagement</h2>
-          <div class="ranking-item" v-for="item in topKOLsByEngagement" :key="item.no">
-            <span class="name">{{ item.kolName }}</span>
-            <span class="value">{{ item.totalEngagement.toLocaleString() }}</span>
-          </div>
-        </div>
-        <div class="ranking-card">
-          <h2>Top 5 Engagement rate by follow</h2>
-          <div class="ranking-item" v-for="item in topEngagementRateByFollower" :key="item.no">
-            <span class="name">{{ item.kolName }}</span>
-            <span class="value">{{ item.engagementRateByFollower.toFixed(2) }}%</span>
-          </div>
-        </div>
-        <div class="ranking-card">
-          <h2>Top 5 Engagement rate by reach</h2>
-          <div class="ranking-item" v-for="item in topEngagementRateByReach" :key="item.no">
-            <span class="name">{{ item.kolName }}</span>
-            <span class="value">{{ item.engagementRateByReach.toFixed(2) }}%</span>
-          </div>
+          <table class="top5-table">
+            <thead>
+              <tr>
+                <th>KOL Name</th>
+                <th>Follower</th>
+                <th>Link Post</th>
+                <th>Total Engagement</th>
+                <th>CTR%</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in topKOLsByEngagement" :key="item.no">
+                <td>{{ item.kolName }}</td>
+                <td>{{ item.follower.toLocaleString() }}</td>
+                <td>
+                  <a :href="item.link" target="_blank" rel="noopener noreferrer">{{ item.link }}</a>
+                </td>
+                <td>{{ item.totalEngagement.toLocaleString() }}</td>
+                <td>{{ item.ctr.toFixed(2) }}%</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
-      <div class="grid-container charts-row">
+      <!-- หน้า 2: กราฟ CTR + Bar รวมใน div เดียว -->
+      <div id="charts" style="margin-top: 30px;">
         <div class="chart-container">
-          <h2>KOL Type</h2>
-          <PieChart :chart-data="pieChartDataType" />
+          <h2>CTR (%) by KOL Type</h2>
+          <LineChart :chart-data="lineChartDataKolCTR" />
         </div>
-        <div class="chart-container">
-          <h2>Total Engagement</h2>
-          <BarChart :chart-data="barChartDataTotalEngagement" />
-        </div>
-      </div>
-      
-      <div class="grid-container charts-row">
-        <div class="chart-container">
-          <h2>Total Reach, Like, Share, Comment</h2>
-          <BarChart :chart-data="barChartDataTotal" />
-        </div>
-        <div class="chart-container">
-          <h2>Average CTR (%) by KOL Type</h2>
-          <LineChart :chart-data="lineChartDataAvgCTRByType" />
+
+        <div class="chart-container" style="margin-top: 20px;">
+          <h2>Kols Engagement</h2>
+          <BarChart :chart-data="barChartDataKolEngagement" />
         </div>
       </div>
-      
-      <div class="table-container">
-        <h2>All KOL Performance Data</h2>
+
+      <!-- หน้า 3: ตารางข้อมูลทั้งหมด -->
+      <div class="table-container" style="margin-top: 30px;">
+        <h2>KOLs Data</h2>
         <table>
           <thead>
             <tr>
@@ -306,41 +263,120 @@ onMounted(async () => {
               <th>KOL Name</th>
               <th>Followers</th>
               <th>Platform</th>
-              <th>Type</th>
               <th>Reach</th>
               <th>Likes</th>
               <th>Comments</th>
               <th>Shares</th>
-              <th>CTR (%)</th>
               <th>Total Engagement</th>
-              <th>ER by Follower (%)</th>
-              <th>ER by Reach (%)</th>
+              <th>CTR (%)</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="kol in paginatedKols" :key="kol.no">
+            <tr v-for="kol in kols" :key="kol.no">
               <td>{{ kol.no }}</td>
               <td>{{ kol.kolName }}</td>
               <td>{{ kol.follower.toLocaleString() }}</td>
               <td>{{ kol.platform }}</td>
-              <td>{{ kol.type }}</td>
               <td>{{ kol.reach.toLocaleString() }}</td>
               <td>{{ kol.like.toLocaleString() }}</td>
               <td>{{ kol.comment.toLocaleString() }}</td>
               <td>{{ kol.share.toLocaleString() }}</td>
-              <td>{{ kol.ctr.toFixed(2) }}</td>
               <td>{{ kol.totalEngagement.toLocaleString() }}</td>
-              <td>{{ kol.engagementRateByFollower.toFixed(2) }}</td>
-              <td>{{ kol.engagementRateByReach.toFixed(2) }}</td>
+              <td>{{ kol.ctr.toFixed(2) }}%</td>
             </tr>
           </tbody>
         </table>
-        <div class="pagination">
-          <button @click="currentPage--" :disabled="currentPage === 1">Prev</button>
-          <span>Page {{ currentPage }} of {{ totalPages }}</span>
-          <button @click="currentPage++" :disabled="currentPage === totalPages">Next</button>
-        </div>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.export-button-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+.btn-export {
+  background-color: var(--pastel-green);
+  color: var(--white);
+  border: none;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  box-shadow: var(--shadow);
+}
+
+.btn-export:hover {
+  background-color: var(--pastel-mint);
+  color: var(--text-dark);
+}
+
+.top5-table a {
+  text-decoration: none;
+  color: var(--text-dark);
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.top5-table a:hover {
+  text-decoration: underline;
+  color: var(--pastel-green);
+}
+
+/* ปรับตารางให้สวย */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead th {
+  background-color: palevioletred;
+  color: white;
+  padding: 8px;
+  text-align: left;
+}
+
+tbody td {
+  border-bottom: 1px solid #ddd;
+  padding: 8px;
+}
+
+tbody tr:hover {
+  background-color: #f1f1f1;
+}
+
+.summary-cards-grid {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.summary-card {
+  flex: 1;
+  min-width: 120px;
+  background: #f9f9f9;
+  border-top: 6px solid;
+  padding: 12px;
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+}
+
+.summary-value {
+  font-size: 1.4em;
+  font-weight: 700;
+}
+
+.chart-container {
+  background: #fff;
+  padding: 12px;
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+}
+
+/* ปุ่ม pagination เอาออก เพราะไม่ใช้ */
+</style>
