@@ -100,72 +100,74 @@ onMounted(async () => {
 
 const exportFullPagePDF = async () => {
   try {
-    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdf = new jsPDF('l', 'mm', 'a4');
     const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const margin = 10;
 
-    // หน้า 1: summary + top 5
-    const summaryAndTop5El = document.querySelector('#summary-and-top5') as HTMLElement | null;
-    if (!summaryAndTop5El) {
-      alert('ไม่พบส่วน summary และ top 5');
-      return;
+    // ---------- หน้า 1: Summary + Top 5 ----------
+    const summaryAndTop5El = document.querySelector('#summary-and-top5') as HTMLElement;
+    if (summaryAndTop5El) {
+      const canvas = await html2canvas(summaryAndTop5El, { scale: 3 });
+      const imgData = canvas.toDataURL('image/png');
+      const imgProps = pdf.getImageProperties(imgData);
+      const imgWidth = pdfWidth - margin * 2;
+      const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+      pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
     }
-    const canvasSummaryTop5 = await html2canvas(summaryAndTop5El, { scale: 2 });
-    const imgDataSummaryTop5 = canvasSummaryTop5.toDataURL('image/png');
-    const imgPropsSummaryTop5 = pdf.getImageProperties(imgDataSummaryTop5);
-    const imgWidthSummaryTop5 = pdfWidth - 10;
-    const imgHeightSummaryTop5 = (imgPropsSummaryTop5.height * imgWidthSummaryTop5) / imgPropsSummaryTop5.width;
-    pdf.addImage(imgDataSummaryTop5, 'PNG', 5, 5, imgWidthSummaryTop5, imgHeightSummaryTop5);
 
-    // หน้า 2: กราฟ CTR + Bar รวมหน้าเดียว
-    const chartsEl = document.querySelector('#charts') as HTMLElement | null;
-    if (!chartsEl) {
-      alert('ไม่พบส่วนกราฟ');
-      return;
+    // ---------- หน้า 2: Bar Chart ----------
+    const barChartEl = document.querySelector('.chart-container:nth-of-type(1)') as HTMLElement;
+    if (barChartEl) {
+      pdf.addPage();
+      const canvas = await html2canvas(barChartEl, { scale: 3 });
+      const imgData = canvas.toDataURL('image/png');
+      const imgProps = pdf.getImageProperties(imgData);
+      const imgWidth = pdfWidth - margin * 2;
+      const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+      pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
     }
-    pdf.addPage();
-    const canvasCharts = await html2canvas(chartsEl, { scale: 2 });
-    const imgDataCharts = canvasCharts.toDataURL('image/png');
-    const imgPropsCharts = pdf.getImageProperties(imgDataCharts);
-    const imgWidthCharts = pdfWidth - 10;
-    const imgHeightCharts = (imgPropsCharts.height * imgWidthCharts) / imgPropsCharts.width;
-    pdf.addImage(imgDataCharts, 'PNG', 5, 5, imgWidthCharts, imgHeightCharts);
 
-    // หน้า 3: ตารางข้อมูลทั้งหมด (ไม่แบ่งหน้า)
-    pdf.addPage();
+    // ---------- หน้า 3: Line Chart ----------
+    const lineChartEl = document.querySelector('.chart-container:nth-of-type(2)') as HTMLElement;
+    if (lineChartEl) {
+      pdf.addPage();
+      const canvas = await html2canvas(lineChartEl, { scale: 3 });
+      const imgData = canvas.toDataURL('image/png');
+      const imgProps = pdf.getImageProperties(imgData);
+      const imgWidth = pdfWidth - margin * 2;
+      const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+      pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
+    }
 
+    // ---------- หน้า 4: Table ----------
+    pdf.addPage();
     const head = [[
-      'No.',
-      'KOL Name',
-      'Followers',
-      'Platform',
-      'Reach',
-      'Likes',
-      'Comments',
-      'Shares',
-      'Total Engagement',
-      'CTR (%)',
+      'No.', 'KOL Name', 'Followers', 'Platform',
+      'Reach', 'Likes', 'Comments', 'Shares',
+      'Total Engagement', 'CTR (%)'
     ]];
 
-    const body = kols.value.map(kol => [
-      kol.no,
-      kol.kolName,
-      kol.follower.toLocaleString(),
-      kol.platform,
-      kol.reach.toLocaleString(),
-      kol.like.toLocaleString(),
-      kol.comment.toLocaleString(),
-      kol.share.toLocaleString(),
-      kol.totalEngagement.toLocaleString(),
-      kol.ctr.toFixed(2),
+    const body = kols.value.map(k => [
+      k.no,
+      k.kolName,
+      k.follower.toLocaleString(),
+      k.platform,
+      k.reach.toLocaleString(),
+      k.like.toLocaleString(),
+      k.comment.toLocaleString(),
+      k.share.toLocaleString(),
+      k.totalEngagement.toLocaleString(),
+      k.ctr.toFixed(2),
     ]);
 
     autoTable(pdf, {
       head,
       body,
-      startY: 10,
+      startY: margin,
       styles: { fontSize: 7 },
       headStyles: { fillColor: [100, 100, 255] },
-      margin: { left: 5, right: 5 },
+      margin: { left: margin, right: margin },
       pageBreak: 'auto',
     });
 
@@ -174,6 +176,7 @@ const exportFullPagePDF = async () => {
     console.error('Export PDF failed:', error);
   }
 };
+
 </script>
 
 <template>
@@ -242,14 +245,13 @@ const exportFullPagePDF = async () => {
 
       <!-- หน้า 2: กราฟ CTR + Bar รวมใน div เดียว -->
       <div id="charts" style="margin-top: 30px;">
-        <div class="chart-container">
-          <h2>CTR (%) by KOL Type</h2>
-          <LineChart :chart-data="lineChartDataKolCTR" />
-        </div>
-
         <div class="chart-container" style="margin-top: 20px;">
           <h2>Kols Engagement</h2>
           <BarChart :chart-data="barChartDataKolEngagement" />
+        </div>
+        <div class="chart-container" style="margin-top: 20px;">
+          <h2>CTR (%) by KOL Type</h2>
+          <LineChart :chart-data="lineChartDataKolCTR" />
         </div>
       </div>
 
@@ -337,12 +339,13 @@ thead th {
   background-color: palevioletred;
   color: white;
   padding: 8px;
-  text-align: left;
+  text-align: center;
 }
 
 tbody td {
   border-bottom: 1px solid #ddd;
   padding: 8px;
+  text-align: center;
 }
 
 tbody tr:hover {

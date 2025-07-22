@@ -28,7 +28,7 @@ const chartOptions = {
     },
     datalabels: {
       display: true,
-      rotation: 90,    
+      rotation: 270,    
       align: 'top' as const
     }
   },

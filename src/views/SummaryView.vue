@@ -136,7 +136,7 @@ const exportCampaignSummaryPDF = async () => {
     pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
 
     // ✅ หน้า 2: Table (แยกหน้า)
-    pdf.addPage();
+    pdf.addPage('a4', 'landscape');
 
     const head = [[
       'No.',
@@ -320,6 +320,19 @@ const exportCampaignSummaryPDF = async () => {
   gap: 12px;
   padding: 8px;
   background: white;
+}
+
+thead th {
+  background-color: palevioletred;
+  color: white;
+  padding: 8px;
+  text-align: center;
+}
+
+tbody td {
+  border-bottom: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
 }
 </style>
 
