@@ -218,7 +218,7 @@ const exportCampaignSummaryPDF = async () => {
         </div>
         <div class="grid-container top-rankings-grid">
           <div class="ranking-card">
-            <h2>Top 5 Engagement ratio</h2>
+            <h2>Engagement ratio</h2>
             <PieChart :chart-data="pieChartDataEngagementRatio" />
           </div>
           <div class="ranking-card">
