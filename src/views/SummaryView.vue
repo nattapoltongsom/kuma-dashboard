@@ -67,14 +67,18 @@ const totalSummary = computed(() => {
   };
 });
 
+const colorPalette = [
+  '#b8e0d2', '#d6eaff', '#ffd6e0', '#e8d6ff', '#fff2d6', '#d6f5e8',
+];
+
 const barChartData = computed<ChartData<'bar'>>(() => ({
   labels: campaigns.value.map(c => c.campaignName),
   datasets: [
-    { label: 'Engagement', data: campaigns.value.map(c => c.totalEngagement), backgroundColor: '#36A2EB' },
-    { label: 'Reach', data: campaigns.value.map(c => c.totalReach), backgroundColor: '#4BC0C0' },
-    { label: 'Comment', data: campaigns.value.map(c => c.totalComment), backgroundColor: '#FFCE56' },
-    { label: 'Like', data: campaigns.value.map(c => c.totalLike), backgroundColor: '#FF9F40' },
-    { label: 'Share', data: campaigns.value.map(c => c.totalShare), backgroundColor: '#FF6384' },
+    { label: 'Engagement', data: campaigns.value.map(c => c.totalEngagement), backgroundColor: '#b8e0d2' },
+    { label: 'Reach', data: campaigns.value.map(c => c.totalReach), backgroundColor: '#d6eaff' },
+    { label: 'Comment', data: campaigns.value.map(c => c.totalComment), backgroundColor: '#ffd6e0' },
+    { label: 'Like', data: campaigns.value.map(c => c.totalLike), backgroundColor: '#e8d6ff' },
+    { label: 'Share', data: campaigns.value.map(c => c.totalShare), backgroundColor: '#fff2d6' },
   ]
 }));
 
@@ -83,7 +87,7 @@ const pieChartDataEngagementRatio = computed<ChartData<'pie'>>(() => ({
   datasets: [{
     label: 'Total Engagement',
     data: campaigns.value.map(c => c.totalEngagement),
-    backgroundColor: ['#41B883', '#E46651', '#00D8FF', '#DD1B16', '#FDB45C'],
+    backgroundColor: colorPalette,
   }]
 }));
 
@@ -120,70 +124,48 @@ const exportCampaignSummaryPDF = async () => {
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const margin = 5;
 
-    // ✅ หน้า 1: Summary cards + PieChart + Top 5
-    const firstPageEl = document.querySelector('.pdf-export-container') as HTMLElement;
-    if (!firstPageEl) {
-      alert('ไม่พบ container สำหรับ export หน้าแรก');
-      return;
-    }
+    const exportSection = async (selector: string, isFirstPage = false) => {
+      const element = document.querySelector(selector) as HTMLElement;
+      if (!element) return;
 
-    const firstCanvas = await html2canvas(firstPageEl, { scale: 2 });
-    const firstImg = firstCanvas.toDataURL('image/png');
-    const firstImgProps = pdf.getImageProperties(firstImg);
-    const firstImgWidth = pdfWidth - margin * 2;
-    const firstImgHeight = (firstImgProps.height * firstImgWidth) / firstImgProps.width;
+      const canvas = await html2canvas(element, { scale: 2 });
+      const img = canvas.toDataURL('image/png');
+      const props = pdf.getImageProperties(img);
+      const width = pdfWidth - margin * 2;
+      const height = (props.height * width) / props.width;
 
-    pdf.addImage(firstImg, 'PNG', margin, margin, firstImgWidth, firstImgHeight);
+      if (!isFirstPage) pdf.addPage('a4', 'landscape');
+      pdf.addImage(img, 'PNG', margin, margin, width, height);
+    };
 
-    // ✅ หน้า 2: Charts (BarChart + LineChart)
-    const chartSection = document.querySelector('.charts-row') as HTMLElement;
-    if (!chartSection) {
-      alert('ไม่พบ container สำหรับกราฟ');
-      return;
-    }
+    // ✅ หน้า 1: Summary
+    await exportSection('.page-1', true);
 
+    // ✅ หน้า 2: BarChart
+    await exportSection('.page-2');
+
+    // ✅ หน้า 3: LineChart
+    await exportSection('.page-3');
+
+    // ✅ หน้า 4: ตาราง
     pdf.addPage('a4', 'landscape');
-
-    const chartCanvas = await html2canvas(chartSection, { scale: 2 });
-    const chartImg = chartCanvas.toDataURL('image/png');
-    const chartProps = pdf.getImageProperties(chartImg);
-    const chartWidth = pdfWidth - margin * 2;
-    const chartHeight = (chartProps.height * chartWidth) / chartProps.width;
-
-    pdf.addImage(chartImg, 'PNG', margin, margin, chartWidth, chartHeight);
-
-    // ✅ หน้า 3: ตารางข้อมูล
-    pdf.addPage('a4', 'landscape');
-
-    const head = [[
-      'No.',
-      'Name',
-      'Total Kols',
-      'Platform',
-      'Total Reach',
-      'Total Likes',
-      'Total Comments',
-      'Total Shares',
-      'Total Engagement',
-      'CTR (%)',
-    ]];
-
-    const body = campaigns.value.map(c => [
-      c.no,
-      c.campaignName,
-      c.infoCount,
-      c.platform,
-      c.totalReach.toLocaleString(),
-      c.totalLike.toLocaleString(),
-      c.totalComment.toLocaleString(),
-      c.totalShare.toLocaleString(),
-      c.totalEngagement.toLocaleString(),
-      c.avgCTR.toFixed(2),
-    ]);
-
     autoTable(pdf, {
-      head,
-      body,
+      head: [[
+        'No.', 'Name', 'Total Kols', 'Platform', 'Total Reach', 'Total Likes',
+        'Total Comments', 'Total Shares', 'Total Engagement', 'CTR (%)',
+      ]],
+      body: campaigns.value.map(c => [
+        c.no,
+        c.campaignName,
+        c.infoCount,
+        c.platform,
+        c.totalReach.toLocaleString(),
+        c.totalLike.toLocaleString(),
+        c.totalComment.toLocaleString(),
+        c.totalShare.toLocaleString(),
+        c.totalEngagement.toLocaleString(),
+        c.avgCTR.toFixed(2),
+      ]),
       startY: margin,
       styles: { fontSize: 7 },
       headStyles: { fillColor: [100, 100, 255] },
@@ -210,7 +192,7 @@ const exportCampaignSummaryPDF = async () => {
     <div v-if="error" class="error">{{ error }}</div>
 
     <div v-if="!loading && !error">
-      <div class="pdf-export-container">
+      <div class="pdf-page page-1">
         <div class="summary-cards-grid">
           <div class="summary-card" style="border-top-color: var(--pastel-yellow);">
             <h3>Total Engagement</h3>
@@ -251,20 +233,22 @@ const exportCampaignSummaryPDF = async () => {
             </router-link>
           </div>
         </div>
-      </div>  
-    <div class="pdf-export-container">
-       <div class="grid-container charts-row">
-          <div class="chart-container">
-            <h2>Total by campaign</h2>
-            <BarChart :chart-data="barChartData" />
-          </div>
-          <div class="chart-container">
-            <h2>CTR (%) by campaign</h2>
-            <LineChart :chart-data="avgCTRChartData" /> 
-          </div>
-        </div>
       </div>
-      <div class="table-container">
+
+    <div class="pdf-page chart-page page-2">
+        <div class="chart-container" style="margin-top: 20px;">
+          <h2>Total by campaign</h2>
+          <BarChart :chart-data="barChartData" />
+        </div>
+    </div>  
+
+    <div class="pdf-page chart-page page-3">
+      <div class="chart-container" style="margin-top: 20px;">
+          <h2>CTR (%) by campaign</h2>
+          <LineChart :chart-data="avgCTRChartData" /> 
+        </div>
+    </div>  
+      <div class="table-container" style="margin-top: 30px;">
         <h2>Campaign Data</h2>
         <table>
           <thead>

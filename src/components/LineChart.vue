@@ -50,7 +50,7 @@ y: {
   },
   plugins: {
     datalabels: {
-      align: 'top',
+      align: 'end',
       anchor: 'end',
       color: '#444',
       font: {
@@ -58,11 +58,12 @@ y: {
         size: 12,
       },
       formatter: (value: number) => value.toString(),
-      offset: 4,
+      offset: 5,
+      rotation: 320,  // หมุน label ให้ตรง
     },
     legend: {
       display: true,
-      position: 'top',  
+      position: 'bottom' as const,
     },
     tooltip: {
       enabled: true,

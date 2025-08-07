@@ -12,6 +12,11 @@ defineProps<{
 const chartOptions = {
   responsive: true,
   maintainAspectRatio: true,
+  layout: {
+    padding: {
+      top: 40  // เพิ่ม padding ด้านบนเพื่อให้ label ไม่โดนตัด
+    }
+  },
   scales: {
     x: {
       ticks: {
@@ -24,12 +29,18 @@ const chartOptions = {
   plugins: {
     legend: {
       display: true,
-      position: 'top' as const,
+      position: 'bottom' as const,
     },
     datalabels: {
       display: true,
-      rotation: 270,    
-      align: 'top' as const
+      anchor: 'end',
+      align: 'end',
+      offset: 5,
+      rotation: 320,
+      font: {
+        weight: 'bold',
+        size: 12
+      }
     }
   },
 };
