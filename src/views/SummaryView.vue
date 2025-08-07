@@ -120,22 +120,39 @@ const exportCampaignSummaryPDF = async () => {
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const margin = 5;
 
-    // ✅ รวมทุกส่วนไว้ใน container เดียว
-    const fullContentEl = document.querySelector('.pdf-export-container') as HTMLElement | null;
-    if (!fullContentEl) {
-      alert('ไม่พบ container สำหรับ export');
+    // ✅ หน้า 1: Summary cards + PieChart + Top 5
+    const firstPageEl = document.querySelector('.pdf-export-container') as HTMLElement;
+    if (!firstPageEl) {
+      alert('ไม่พบ container สำหรับ export หน้าแรก');
       return;
     }
 
-    const canvas = await html2canvas(fullContentEl, { scale: 2 });
-    const imgData = canvas.toDataURL('image/png');
-    const imgProps = pdf.getImageProperties(imgData);
-    const imgWidth = pdfWidth - margin * 2;
-    const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+    const firstCanvas = await html2canvas(firstPageEl, { scale: 2 });
+    const firstImg = firstCanvas.toDataURL('image/png');
+    const firstImgProps = pdf.getImageProperties(firstImg);
+    const firstImgWidth = pdfWidth - margin * 2;
+    const firstImgHeight = (firstImgProps.height * firstImgWidth) / firstImgProps.width;
 
-    pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
+    pdf.addImage(firstImg, 'PNG', margin, margin, firstImgWidth, firstImgHeight);
 
-    // ✅ หน้า 2: Table (แยกหน้า)
+    // ✅ หน้า 2: Charts (BarChart + LineChart)
+    const chartSection = document.querySelector('.charts-row') as HTMLElement;
+    if (!chartSection) {
+      alert('ไม่พบ container สำหรับกราฟ');
+      return;
+    }
+
+    pdf.addPage('a4', 'landscape');
+
+    const chartCanvas = await html2canvas(chartSection, { scale: 2 });
+    const chartImg = chartCanvas.toDataURL('image/png');
+    const chartProps = pdf.getImageProperties(chartImg);
+    const chartWidth = pdfWidth - margin * 2;
+    const chartHeight = (chartProps.height * chartWidth) / chartProps.width;
+
+    pdf.addImage(chartImg, 'PNG', margin, margin, chartWidth, chartHeight);
+
+    // ✅ หน้า 3: ตารางข้อมูล
     pdf.addPage('a4', 'landscape');
 
     const head = [[
@@ -234,8 +251,9 @@ const exportCampaignSummaryPDF = async () => {
             </router-link>
           </div>
         </div>
-
-        <div class="grid-container charts-row">
+      </div>  
+    <div class="pdf-export-container">
+       <div class="grid-container charts-row">
           <div class="chart-container">
             <h2>Total by campaign</h2>
             <BarChart :chart-data="barChartData" />
