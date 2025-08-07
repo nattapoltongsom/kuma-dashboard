@@ -35,7 +35,7 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHashHistory(), // ใช้ HashHistory สำหรับ GitHub Pages
+  history: createWebHashHistory('/kuma/'), 
   routes
 })
 
