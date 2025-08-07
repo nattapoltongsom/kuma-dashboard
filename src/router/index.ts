@@ -1,4 +1,4 @@
-import { createRouter, createWebHashHistory } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 import SummaryView from '../views/SummaryView.vue'
 
 const routes = [
@@ -35,7 +35,7 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHashHistory('/kuma/'), 
+  history: createWebHistory('/kuma/'), 
   routes
 })
 
