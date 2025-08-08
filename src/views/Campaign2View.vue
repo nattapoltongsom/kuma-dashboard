@@ -171,7 +171,7 @@ const exportFullPagePDF = async () => {
       pageBreak: 'auto',
     });
 
-    pdf.save('Full_KOL_Report.pdf');
+    pdf.save('KATO (KOLs Report).pdf');
   } catch (error) {
     console.error('Export PDF failed:', error);
   }

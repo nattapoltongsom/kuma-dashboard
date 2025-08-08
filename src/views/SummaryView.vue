@@ -173,7 +173,7 @@ const exportCampaignSummaryPDF = async () => {
       pageBreak: 'auto',
     });
 
-    pdf.save('Campaigns_Summary_Report.pdf');
+    pdf.save('Summary Campaigns Kuma (Report).pdf');
   } catch (error) {
     console.error('Export PDF failed:', error);
     alert('Export PDF ล้มเหลว กรุณาลองใหม่อีกครั้ง');
