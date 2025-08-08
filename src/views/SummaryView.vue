@@ -26,6 +26,7 @@ interface CampaignSummary {
 const loading = ref(true);
 const error = ref<string | null>(null);
 const campaigns = ref<CampaignSummary[]>([]);
+const exporting = ref(false); // สถานะ export
 
 // ---- Data Processing ----
 // ฟังก์ชันแปลงข้อมูล string จาก CSV ให้เป็น number และจัดการกับ '%'
@@ -101,6 +102,28 @@ const avgCTRChartData = computed<ChartData<'line'>>(() => ({
   }]
 }));
 
+const loadData = async () => {
+  try {
+    loading.value = true;
+    error.value = null;
+    const data = await fetchData('Summary'); 
+    if (data && data.length > 1) {
+      processData(data);
+    } else {
+      error.value = 'No data found.';
+    }
+  } catch (err) {
+    console.log("Failed to load data." , err)
+    error.value = 'Failed to load data.';
+  } finally {
+    loading.value = false;
+  }
+};
+
+const refreshData = () => {
+  loadData();
+};
+
 onMounted(async () => {
   try {
     loading.value = true;
@@ -120,6 +143,7 @@ onMounted(async () => {
 
 const exportCampaignSummaryPDF = async () => {
   try {
+    exporting.value = true;
     const pdf = new jsPDF('l', 'mm', 'a4');
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const margin = 5;
@@ -178,6 +202,9 @@ const exportCampaignSummaryPDF = async () => {
     console.error('Export PDF failed:', error);
     alert('Export PDF ล้มเหลว กรุณาลองใหม่อีกครั้ง');
   }
+  finally{
+    exporting.value = false;
+  }
 };
 
 </script>
@@ -185,9 +212,19 @@ const exportCampaignSummaryPDF = async () => {
 <template>
   <div class="page-container">
     <h1>Campaigns Summary</h1>
-    <div class="export-button-wrapper">
-      <button @click="exportCampaignSummaryPDF" class="btn-export">Export Campaigns Summary PDF</button>
-    </div>
+      <div class="export-button-wrapper">
+        <button @click="refreshData" class="btn-refresh" :disabled="loading || exporting">
+          Refresh
+        </button>
+        <button
+          @click="exportCampaignSummaryPDF"
+          class="btn-export"
+          :disabled="loading || exporting"
+        >
+          <span v-if="exporting">Exporting...</span>
+          <span v-else>Export Campaigns Summary PDF</span>
+        </button>
+      </div>
     <div v-if="loading" class="loading">Loading Data...</div>
     <div v-if="error" class="error">{{ error }}</div>
 
@@ -336,5 +373,27 @@ tbody td {
   padding: 8px;
   text-align: center;
 }
-</style>
 
+.btn-refresh {
+  background-color: var(--pastel-blue);
+  color: var(--white);
+  border: none;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 8px;
+  box-shadow: var(--shadow);
+  transition: background-color 0.3s ease;
+}
+
+.btn-refresh:hover:not(:disabled) {
+  background-color: #88bde6; /* สีฟ้าเข้มขึ้น */
+  color: var(--text-dark);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+</style>

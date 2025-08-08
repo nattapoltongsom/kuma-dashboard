@@ -26,6 +26,7 @@ interface KOLPerformance {
 const loading = ref(true);
 const error = ref<string | null>(null);
 const kols = ref<KOLPerformance[]>([]);
+const exporting = ref(false);  // สถานะกำลัง export
 
 const parseNumber = (text: string) => parseFloat(text.replace(/,|%/g, '')) || 0;
 
@@ -82,6 +83,23 @@ const totalSummary = computed(() => ({
   totalEngagement: kols.value.reduce((sum, c) => sum + c.totalEngagement, 0),
 }));
 
+const loadData = async () => {
+  try {
+    loading.value = true;
+    error.value = null;
+    const data = await fetchData('Campaign 1');
+    if (data && data.length > 1) {
+      processData(data);
+    } else {
+      error.value = 'No data found.';
+    }
+  } catch {
+    error.value = 'Failed to load data.';
+  } finally {
+    loading.value = false;
+  }
+};
+
 onMounted(async () => {
   try {
     loading.value = true;
@@ -98,8 +116,13 @@ onMounted(async () => {
   }
 });
 
+const refreshData = () => {
+  loadData();
+};
+
 const exportFullPagePDF = async () => {
   try {
+    exporting.value = true;
     const pdf = new jsPDF('l', 'mm', 'a4');
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -174,6 +197,8 @@ const exportFullPagePDF = async () => {
     pdf.save('PETTO (KOLs Report).pdf');
   } catch (error) {
     console.error('Export PDF failed:', error);
+  } finally {
+    exporting.value = false;
   }
 };
 
@@ -184,12 +209,27 @@ const exportFullPagePDF = async () => {
     <h1>KUMA PETTO Details</h1>
 
     <div class="export-button-wrapper">
-      <button @click="exportFullPagePDF" class="btn-export">Export Full Report PDF</button>
+      <button 
+        @click="refreshData" 
+        class="btn-refresh" 
+        :disabled="loading || exporting"
+      >
+        <span v-if="loading">Loading...</span>
+        <span v-else>Refresh</span>
+      </button>
+
+      <button 
+        @click="exportFullPagePDF" 
+        class="btn-export" 
+        :disabled="loading || exporting"
+      >
+        <span v-if="exporting">Exporting...</span>
+        <span v-else>Export Full Report PDF</span>
+      </button>
     </div>
 
     <div v-if="loading" class="loading">Loading Data...</div>
     <div v-if="error" class="error">{{ error }}</div>
-
     <div v-if="!loading && !error">
       <!-- หน้า 1: summary + top 5 -->
       <div id="summary-and-top5">
