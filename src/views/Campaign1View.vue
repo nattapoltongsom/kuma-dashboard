@@ -208,15 +208,7 @@ const exportFullPagePDF = async () => {
   <div class="page-container">
     <h1>UNBOX Details</h1>
     <div class="export-button-wrapper">
-      <button 
-        @click="refreshData" 
-        class="btn-refresh" 
-        :disabled="loading || exporting"
-      >
-    
-        <span v-if="loading">Loading...</span>
-        <span v-else>Refresh</span>
-      </button>
+
 
       <button 
         @click="exportFullPagePDF" 
@@ -225,6 +217,15 @@ const exportFullPagePDF = async () => {
       >
         <span v-if="exporting">Exporting...</span>
         <span v-else>Export Full Report PDF</span>
+      </button>
+            <button 
+        @click="refreshData" 
+        class="btn-refresh" 
+        :disabled="loading || exporting"
+      >
+    
+        <span v-if="loading">Loading...</span>
+        <span v-else>Refresh</span>
       </button>
     </div>
 

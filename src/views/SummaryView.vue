@@ -213,9 +213,6 @@ const exportCampaignSummaryPDF = async () => {
   <div class="page-container">
     <h1>Campaigns Summary</h1>
       <div class="export-button-wrapper">
-        <button @click="refreshData" class="btn-refresh" :disabled="loading || exporting">
-          Refresh
-        </button>
         <button
           @click="exportCampaignSummaryPDF"
           class="btn-export"
@@ -223,6 +220,9 @@ const exportCampaignSummaryPDF = async () => {
         >
           <span v-if="exporting">Exporting...</span>
           <span v-else>Export Campaigns Summary PDF</span>
+        </button>        
+        <button @click="refreshData" class="btn-refresh" :disabled="loading || exporting">
+          Refresh
         </button>
       </div>
     <div v-if="loading" class="loading">Loading Data...</div>
