@@ -87,8 +87,9 @@ const loadData = async () => {
   try {
     loading.value = true;
     error.value = null;
-    const data = await fetchData('Campaign 1');
-    if (data && data.length > 1) {
+    const data = await fetchData('Campaign 3');
+    console.log('Fetched data:', data);
+    if (data && data.length > 0) {
       processData(data);
     } else {
       error.value = 'No data found.';
@@ -100,21 +101,7 @@ const loadData = async () => {
   }
 };
 
-onMounted(async () => {
-  try {
-    loading.value = true;
-    const data = await fetchData('Campaign 3');
-    if (data && data.length > 1) {
-      processData(data);
-    } else {
-      error.value = 'No data found.';
-    }
-  } catch {
-    error.value = 'Failed to load data.';
-  } finally {
-    loading.value = false;
-  }
-});
+onMounted(loadData);
 
 const refreshData = () => {
   loadData();

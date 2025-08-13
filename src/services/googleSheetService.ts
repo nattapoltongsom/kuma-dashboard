@@ -59,6 +59,7 @@ const parseCsv = (csvText: string): string[][] => {
  */
 const fetchData = async (sheetName: keyof typeof SHEET_GIDS): Promise<string[][]> => {
   const gid = SHEET_GIDS[sheetName];
+  console.log("gid", gid, sheetName)
   if (!gid) {
     throw new Error(`Sheet name "${sheetName}" not found in SHEET_GIDS map.`);
   }
