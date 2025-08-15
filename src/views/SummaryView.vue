@@ -14,11 +14,12 @@ interface CampaignSummary {
   campaignName: string;
   infoCount: number;
   platform: string;
-  totalReach: number;
+  totalView: number;
   totalLike: number;
   totalComment: number;
   totalShare: number;
-  avgCTR: number;
+  totalCollect: number
+  avgERV: number;
   totalEngagement: number;
 }
 
@@ -42,12 +43,13 @@ const processData = (data: string[][]) => {
     campaignName: row[1],
     infoCount: parseInt(row[2]),
     platform: row[3],
-    totalReach: parseNumber(row[5]),
+    totalView: parseNumber(row[5]),
     totalLike: parseNumber(row[6]),
     totalComment: parseNumber(row[7]),
     totalShare: parseNumber(row[8]),
-    totalEngagement: parseNumber(row[9]),
-    avgCTR: parseNumber(row[10]),
+    totalCollect: parseNumber(row[9]),
+    totalEngagement: parseNumber(row[10]),
+    avgERV: parseNumber(row[11]),
   }));
 };
 
@@ -60,26 +62,28 @@ const topByEngagement = computed(() =>
 
 const totalSummary = computed(() => {
   return {
-    totalReach: campaigns.value.reduce((sum, c) => sum + c.totalReach, 0),
+    totalView: campaigns.value.reduce((sum, c) => sum + c.totalView, 0),
     totalLike: campaigns.value.reduce((sum, c) => sum + c.totalLike, 0),
     totalComment: campaigns.value.reduce((sum, c) => sum + c.totalComment, 0),
     totalShare: campaigns.value.reduce((sum, c) => sum + c.totalShare, 0),
+    totalCollect: campaigns.value.reduce((sum, c) => sum + c.totalCollect, 0),
     totalEngagement: campaigns.value.reduce((sum, c) => sum + c.totalEngagement, 0),
   };
 });
 
 const colorPalette = [
-  '#b8e0d2', '#d6eaff', '#ffd6e0', '#e8d6ff', '#fff2d6', '#d6f5e8',
+  '#b8e0d2', '#d6eaff', '#ffd6e0', '#e8d6ff', '#fff2d6', '#d6f5e8', '#b8e0d2'
 ];
 
 const barChartData = computed<ChartData<'bar'>>(() => ({
   labels: campaigns.value.map(c => c.campaignName),
   datasets: [
     { label: 'Engagement', data: campaigns.value.map(c => c.totalEngagement), backgroundColor: '#b8e0d2' },
-    { label: 'Reach', data: campaigns.value.map(c => c.totalReach), backgroundColor: '#d6eaff' },
+    { label: 'View', data: campaigns.value.map(c => c.totalView), backgroundColor: '#d6eaff' },
     { label: 'Comment', data: campaigns.value.map(c => c.totalComment), backgroundColor: '#ffd6e0' },
     { label: 'Like', data: campaigns.value.map(c => c.totalLike), backgroundColor: '#e8d6ff' },
     { label: 'Share', data: campaigns.value.map(c => c.totalShare), backgroundColor: '#fff2d6' },
+    { label: 'Collect', data: campaigns.value.map(c => c.totalCollect), backgroundColor: '#d6f5e8' },
   ]
 }));
 
@@ -92,11 +96,11 @@ const pieChartDataEngagementRatio = computed<ChartData<'pie'>>(() => ({
   }]
 }));
 
-const avgCTRChartData = computed<ChartData<'line'>>(() => ({ 
+const avgERVChartData = computed<ChartData<'line'>>(() => ({ 
   labels: campaigns.value.map(c => c.campaignName),
   datasets: [{
-    label: 'CTR(%)',
-    data: campaigns.value.map(c => c.avgCTR),
+    label: 'ERV(%)',
+    data: campaigns.value.map(c => c.avgERV),
     borderColor: '#FF6384', 
     tension: 0.3 
   }]
@@ -175,20 +179,21 @@ const exportCampaignSummaryPDF = async () => {
     pdf.addPage('a4', 'landscape');
     autoTable(pdf, {
       head: [[
-        'No.', 'Name', 'Total Kols', 'Platform', 'Total Reach', 'Total Likes',
-        'Total Comments', 'Total Shares', 'Total Engagement', 'CTR (%)',
+        'No.', 'Name', 'Total Kols', 'Platform', 'Total View', 'Total Likes',
+        'Total Comments', 'Total Shares', 'Total Collect', 'Total Engagement', 'ERV (%)',
       ]],
       body: campaigns.value.map(c => [
         c.no,
         c.campaignName,
         c.infoCount,
         c.platform,
-        c.totalReach.toLocaleString(),
+        c.totalView.toLocaleString(),
         c.totalLike.toLocaleString(),
         c.totalComment.toLocaleString(),
         c.totalShare.toLocaleString(),
+        c.totalCollect.toLocaleString(),
         c.totalEngagement.toLocaleString(),
-        c.avgCTR.toFixed(2),
+        c.avgERV.toFixed(2),
       ]),
       startY: margin,
       styles: { fontSize: 7 },
@@ -232,24 +237,28 @@ const exportCampaignSummaryPDF = async () => {
       <div class="pdf-page page-1">
         <div class="summary-cards-grid">
           <div class="summary-card" style="border-top-color: var(--pastel-yellow);">
-            <h3>Total Engagement</h3>
+            <h3>Total <br>Engagement</h3>
             <p class="summary-value">{{ totalSummary.totalEngagement.toLocaleString() }}</p>
           </div>
           <div class="summary-card" style="border-top-color: var(--pastel-green);">
-            <h3>Total Reach</h3>
-            <p class="summary-value">{{ totalSummary.totalReach.toLocaleString() }}</p>
+            <h3>Total <br>View</h3>
+            <p class="summary-value">{{ totalSummary.totalView.toLocaleString() }}</p>
           </div>
           <div class="summary-card" style="border-top-color: var(--pastel-blue);">
-            <h3>Total Likes</h3>
+            <h3>Total<br>Likes</h3>
             <p class="summary-value">{{ totalSummary.totalLike.toLocaleString() }}</p>
           </div>
           <div class="summary-card" style="border-top-color: var(--pastel-pink);">
-            <h3>Total Comments</h3>
+            <h3>Total <br>Comments</h3>
             <p class="summary-value">{{ totalSummary.totalComment.toLocaleString() }}</p>
           </div>
           <div class="summary-card" style="border-top-color: var(--pastel-yellow);">
-            <h3>Total Shares</h3>
+            <h3>Total <br>Shares</h3>
             <p class="summary-value">{{ totalSummary.totalShare.toLocaleString() }}</p>
+          </div>
+              <div class="summary-card" style="border-top-color: var(--pastel-green);">
+            <h3>Total <br>Collect</h3>
+            <p class="summary-value">{{ totalSummary.totalCollect.toLocaleString() }}</p>
           </div>
         </div>
         <div class="grid-container top-rankings-grid">
@@ -281,8 +290,8 @@ const exportCampaignSummaryPDF = async () => {
 
     <div class="pdf-page chart-page page-3">
       <div class="chart-container" style="margin-top: 20px;">
-          <h2>CTR (%) by campaign</h2>
-          <LineChart :chart-data="avgCTRChartData" /> 
+          <h2>ERV (%) by campaign</h2>
+          <LineChart :chart-data="avgERVChartData" /> 
         </div>
     </div>  
       <div class="table-container" style="margin-top: 30px;">
@@ -294,12 +303,13 @@ const exportCampaignSummaryPDF = async () => {
               <th>Name</th>
               <th>Total Kols</th>
               <th>Platform</th>
-              <th>Total Reach</th>
+              <th>Total View</th>
               <th>Total Likes</th>
               <th>Total Comments</th>
               <th>Total Shares</th>
+              <th>Total Collect</th>
               <th>Total Engagement</th>
-              <th>CTR (%)</th>
+              <th>ERV (%)</th>
             </tr>
           </thead>
           <tbody>
@@ -315,12 +325,13 @@ const exportCampaignSummaryPDF = async () => {
               </td>
               <td>{{ campaign.infoCount }}</td>
               <td>{{ campaign.platform }}</td>
-              <td>{{ campaign.totalReach.toLocaleString() }}</td>
+              <td>{{ campaign.totalView.toLocaleString() }}</td>
               <td>{{ campaign.totalLike.toLocaleString() }}</td>
               <td>{{ campaign.totalComment.toLocaleString() }}</td>
               <td>{{ campaign.totalShare.toLocaleString() }}</td>
+              <td>{{ campaign.totalCollect.toLocaleString() }}</td>
               <td>{{ campaign.totalEngagement.toLocaleString() }}</td>
-              <td>{{ campaign.avgCTR.toFixed(2) }}%</td>
+              <td>{{ campaign.avgERV.toFixed(2) }}%</td>
             </tr>
           </tbody>
         </table>

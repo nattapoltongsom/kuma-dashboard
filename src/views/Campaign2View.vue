@@ -12,14 +12,15 @@ import autoTable from 'jspdf-autotable';
 interface KOLPerformance {
   no: number;
   kolName: string;
-  follower: number;
+  follower: string;
   platform: string;
   link: string;
-  reach: number;
+  view: number;
   like: number;
   comment: number;
   share: number;
-  ctr: number;
+  collect: number;
+  erv: number;
   totalEngagement: number;
 }
 
@@ -35,15 +36,16 @@ const processData = (data: string[][]) => {
   kols.value = rows.map(row => ({
     no: parseInt(row[0]),
     kolName: row[1],
-    follower: parseNumber(row[2]),
+    follower: row[2],
     platform: row[3],
     link: row[4],
-    reach: parseNumber(row[5]),
+    view: parseNumber(row[5]),
     like: parseNumber(row[6]),
     comment: parseNumber(row[7]),
     share: parseNumber(row[8]),
-    totalEngagement: parseNumber(row[9]),
-    ctr: parseNumber(row[10]),
+    collect: parseNumber(row[9]),
+    totalEngagement: parseNumber(row[10]),
+    erv: parseNumber(row[11]),
   }));
 };
 
@@ -52,7 +54,7 @@ const topKOLsByEngagement = computed(() =>
 );
 
 const colorPalette = [
-  '#b8e0d2', '#d6eaff', '#ffd6e0', '#e8d6ff', '#fff2d6', '#d6f5e8',
+  '#b8e0d2', '#d6eaff', '#ffd6e0', '#e8d6ff', '#fff2d6', '#d6f5e8', '#b8e0d2'
 ];
 
 const barChartDataKolEngagement = computed<ChartData<'bar'>>(() => ({
@@ -64,11 +66,11 @@ const barChartDataKolEngagement = computed<ChartData<'bar'>>(() => ({
   }],
 }));
 
-const lineChartDataKolCTR = computed<ChartData<'line'>>(() => ({
+const lineChartDataKolERV = computed<ChartData<'line'>>(() => ({
   labels: kols.value.map(g => g.kolName),
   datasets: [{
-    label: 'CTR (%)',
-    data: kols.value.map(g => g.ctr),
+    label: 'ERV (%)',
+    data: kols.value.map(g => g.erv),
     borderColor: '#ff6384',
     backgroundColor: '#ffb1c1',
     tension: 0.1,
@@ -76,10 +78,11 @@ const lineChartDataKolCTR = computed<ChartData<'line'>>(() => ({
 }));
 
 const totalSummary = computed(() => ({
-  totalReach: kols.value.reduce((sum, c) => sum + c.reach, 0),
+  totalView: kols.value.reduce((sum, c) => sum + c.view, 0),
   totalLike: kols.value.reduce((sum, c) => sum + c.like, 0),
   totalComment: kols.value.reduce((sum, c) => sum + c.comment, 0),
   totalShare: kols.value.reduce((sum, c) => sum + c.share, 0),
+  totalCollect: kols.value.reduce((sum, c) => sum + c.collect, 0),
   totalEngagement: kols.value.reduce((sum, c) => sum + c.totalEngagement, 0),
 }));
 
@@ -153,21 +156,22 @@ const exportFullPagePDF = async () => {
     pdf.addPage();
     const head = [[
       'No.', 'KOL Name', 'Followers', 'Platform',
-      'Reach', 'Likes', 'Comments', 'Shares',
-      'Total Engagement', 'CTR (%)'
+      'View', 'Likes', 'Comments', 'Shares', 'Collect',
+      'Total Engagement', 'ERV (%)'
     ]];
 
     const body = kols.value.map(k => [
       k.no,
       k.kolName,
-      k.follower.toLocaleString(),
+      k.follower,
       k.platform,
-      k.reach.toLocaleString(),
+      k.view.toLocaleString(),
       k.like.toLocaleString(),
       k.comment.toLocaleString(),
       k.share.toLocaleString(),
+      k.collect.toLocaleString(),
       k.totalEngagement.toLocaleString(),
-      k.ctr.toFixed(2),
+      k.erv.toFixed(2),
     ]);
 
     autoTable(pdf, {
@@ -180,7 +184,7 @@ const exportFullPagePDF = async () => {
       pageBreak: 'auto',
     });
 
-    pdf.save('KATO (KOLs Report).pdf');
+    pdf.save('Kuma Kato (KOLs Report).pdf');
   } catch (error) {
     console.error('Export PDF failed:', error);
   } finally {
@@ -194,7 +198,8 @@ const exportFullPagePDF = async () => {
   <div class="page-container">
     <h1>KATO Details</h1>
     <div class="export-button-wrapper">
-     
+
+
       <button 
         @click="exportFullPagePDF" 
         class="btn-export" 
@@ -203,15 +208,15 @@ const exportFullPagePDF = async () => {
         <span v-if="exporting">Exporting...</span>
         <span v-else>Export Full Report PDF</span>
       </button>
-       <button 
+            <button 
         @click="refreshData" 
         class="btn-refresh" 
         :disabled="loading || exporting"
       >
+    
         <span v-if="loading">Loading...</span>
         <span v-else>Refresh</span>
       </button>
-
     </div>
 
     <div v-if="loading" class="loading">Loading Data...</div>
@@ -222,24 +227,28 @@ const exportFullPagePDF = async () => {
       <div id="summary-and-top5">
         <div class="summary-cards-grid">
           <div class="summary-card" style="border-top-color: var(--pastel-yellow);">
-            <h3>Total Engagement</h3>
+            <h3>Total <br>Engagement</h3>
             <p class="summary-value">{{ totalSummary.totalEngagement.toLocaleString() }}</p>
           </div>
           <div class="summary-card" style="border-top-color: var(--pastel-green);">
-            <h3>Total Reach</h3>
-            <p class="summary-value">{{ totalSummary.totalReach.toLocaleString() }}</p>
+            <h3>Total <br>View</h3>
+            <p class="summary-value">{{ totalSummary.totalView.toLocaleString() }}</p>
           </div>
           <div class="summary-card" style="border-top-color: var(--pastel-blue);">
-            <h3>Total Likes</h3>
+            <h3>Total <br>Likes</h3>
             <p class="summary-value">{{ totalSummary.totalLike.toLocaleString() }}</p>
           </div>
           <div class="summary-card" style="border-top-color: var(--pastel-pink);">
-            <h3>Total Comments</h3>
+            <h3>Total <br>Comments</h3>
             <p class="summary-value">{{ totalSummary.totalComment.toLocaleString() }}</p>
           </div>
           <div class="summary-card" style="border-top-color: var(--pastel-yellow);">
-            <h3>Total Shares</h3>
+            <h3>Total <br>Shares</h3>
             <p class="summary-value">{{ totalSummary.totalShare.toLocaleString() }}</p>
+          </div>
+          <div class="summary-card" style="border-top-color: var(--pastel-green);">
+            <h3>Total <br>Collect</h3>
+            <p class="summary-value">{{ totalSummary.totalCollect.toLocaleString() }}</p>
           </div>
         </div>
 
@@ -252,33 +261,33 @@ const exportFullPagePDF = async () => {
                 <th>Follower</th>
                 <th>Link Post</th>
                 <th>Total Engagement</th>
-                <th>CTR%</th>
+                <th>EVR%</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="item in topKOLsByEngagement" :key="item.no">
                 <td>{{ item.kolName }}</td>
-                <td>{{ item.follower.toLocaleString() }}</td>
+                <td>{{ item.follower }}</td>
                 <td>
                   <a :href="item.link" target="_blank" rel="noopener noreferrer">{{ item.link }}</a>
                 </td>
                 <td>{{ item.totalEngagement.toLocaleString() }}</td>
-                <td>{{ item.ctr.toFixed(2) }}%</td>
+                <td>{{ item.erv.toFixed(2) }}%</td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      <!-- หน้า 2: กราฟ CTR + Bar รวมใน div เดียว -->
+      <!-- หน้า 2: กราฟ ERV + Bar รวมใน div เดียว -->
       <div id="charts" style="margin-top: 30px;">
         <div class="chart-container" style="margin-top: 20px;">
           <h2>Kols Engagement</h2>
           <BarChart :chart-data="barChartDataKolEngagement" />
         </div>
         <div class="chart-container" style="margin-top: 20px;">
-          <h2>CTR (%) by KOL Type</h2>
-          <LineChart :chart-data="lineChartDataKolCTR" />
+          <h2>ERV (%) by KOL Type</h2>
+          <LineChart :chart-data="lineChartDataKolERV" />
         </div>
       </div>
 
@@ -292,26 +301,28 @@ const exportFullPagePDF = async () => {
               <th>KOL Name</th>
               <th>Followers</th>
               <th>Platform</th>
-              <th>Reach</th>
+              <th>View</th>
               <th>Likes</th>
               <th>Comments</th>
               <th>Shares</th>
+              <th>Collect</th>
               <th>Total Engagement</th>
-              <th>CTR (%)</th>
+              <th>ERV (%)</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="kol in kols" :key="kol.no">
               <td>{{ kol.no }}</td>
               <td>{{ kol.kolName }}</td>
-              <td>{{ kol.follower.toLocaleString() }}</td>
+              <td>{{ kol.follower }}</td>
               <td>{{ kol.platform }}</td>
-              <td>{{ kol.reach.toLocaleString() }}</td>
+              <td>{{ kol.view.toLocaleString() }}</td>
               <td>{{ kol.like.toLocaleString() }}</td>
               <td>{{ kol.comment.toLocaleString() }}</td>
               <td>{{ kol.share.toLocaleString() }}</td>
+              <td>{{ kol.collect.toLocaleString() }}</td>
               <td>{{ kol.totalEngagement.toLocaleString() }}</td>
-              <td>{{ kol.ctr.toFixed(2) }}%</td>
+              <td>{{ kol.erv.toFixed(2) }}%</td>
             </tr>
           </tbody>
         </table>
