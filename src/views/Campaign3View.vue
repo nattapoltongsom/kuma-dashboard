@@ -156,7 +156,7 @@ const exportFullPagePDF = async () => {
     pdf.addPage();
     const head = [[
       'No.', 'KOL Name', 'Followers', 'Platform',
-      'View', 'Likes', 'Comments', 'Shares', 'Collect',
+      'View', 'Likes', 'Comments', 'Shares', 'Save',
       'Total Engagement', 'ERV (%)'
     ]];
 
@@ -247,7 +247,7 @@ const exportFullPagePDF = async () => {
             <p class="summary-value">{{ totalSummary.totalShare.toLocaleString() }}</p>
           </div>
           <div class="summary-card" style="border-top-color: var(--pastel-green);">
-            <h3>Total <br>Collect</h3>
+            <h3>Total <br>Save</h3>
             <p class="summary-value">{{ totalSummary.totalCollect.toLocaleString() }}</p>
           </div>
         </div>
@@ -261,7 +261,7 @@ const exportFullPagePDF = async () => {
                 <th>Follower</th>
                 <th>Link Post</th>
                 <th>Total Engagement</th>
-                <th>EVR%</th>
+                <th>ERV%</th>
               </tr>
             </thead>
             <tbody>
@@ -305,7 +305,7 @@ const exportFullPagePDF = async () => {
               <th>Likes</th>
               <th>Comments</th>
               <th>Shares</th>
-              <th>Collect</th>
+              <th>Save</th>
               <th>Total Engagement</th>
               <th>ERV (%)</th>
             </tr>
@@ -371,6 +371,7 @@ const exportFullPagePDF = async () => {
 table {
   width: 100%;
   border-collapse: collapse;
+  font-size: 0.7rem;
 }
 
 thead th {

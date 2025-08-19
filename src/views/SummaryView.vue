@@ -83,7 +83,7 @@ const barChartData = computed<ChartData<'bar'>>(() => ({
     { label: 'Comment', data: campaigns.value.map(c => c.totalComment), backgroundColor: '#ffd6e0' },
     { label: 'Like', data: campaigns.value.map(c => c.totalLike), backgroundColor: '#e8d6ff' },
     { label: 'Share', data: campaigns.value.map(c => c.totalShare), backgroundColor: '#fff2d6' },
-    { label: 'Collect', data: campaigns.value.map(c => c.totalCollect), backgroundColor: '#d6f5e8' },
+    { label: 'Save', data: campaigns.value.map(c => c.totalCollect), backgroundColor: '#d6f5e8' },
   ]
 }));
 
@@ -180,7 +180,7 @@ const exportCampaignSummaryPDF = async () => {
     autoTable(pdf, {
       head: [[
         'No.', 'Name', 'Total Kols', 'Platform', 'Total View', 'Total Likes',
-        'Total Comments', 'Total Shares', 'Total Collect', 'Total Engagement', 'ERV (%)',
+        'Total Comments', 'Total Shares', 'Total Save', 'Total Engagement', 'ERV (%)',
       ]],
       body: campaigns.value.map(c => [
         c.no,
@@ -193,7 +193,7 @@ const exportCampaignSummaryPDF = async () => {
         c.totalShare.toLocaleString(),
         c.totalCollect.toLocaleString(),
         c.totalEngagement.toLocaleString(),
-        c.avgERV.toFixed(2),
+        c.avgERV.toFixed(2) + '%',
       ]),
       startY: margin,
       styles: { fontSize: 7 },
@@ -257,7 +257,7 @@ const exportCampaignSummaryPDF = async () => {
             <p class="summary-value">{{ totalSummary.totalShare.toLocaleString() }}</p>
           </div>
               <div class="summary-card" style="border-top-color: var(--pastel-green);">
-            <h3>Total <br>Collect</h3>
+            <h3>Total <br>Save</h3>
             <p class="summary-value">{{ totalSummary.totalCollect.toLocaleString() }}</p>
           </div>
         </div>
@@ -307,7 +307,7 @@ const exportCampaignSummaryPDF = async () => {
               <th>Total Likes</th>
               <th>Total Comments</th>
               <th>Total Shares</th>
-              <th>Total Collect</th>
+              <th>Total Save</th>
               <th>Total Engagement</th>
               <th>ERV (%)</th>
             </tr>
@@ -377,12 +377,14 @@ thead th {
   color: white;
   padding: 8px;
   text-align: center;
+  font-size: 0.7rem;
 }
 
 tbody td {
   border-bottom: 1px solid #ddd;
   padding: 8px;
   text-align: center;
+  font-size: 0.7rem;
 }
 
 .btn-refresh {

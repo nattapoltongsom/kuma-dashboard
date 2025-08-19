@@ -59,7 +59,7 @@ y: {
       },
       formatter: (value: number) => value.toString(),
       offset: 5,
-      rotation: 320,  // หมุน label ให้ตรง
+      rotation: 320,
     },
     legend: {
       display: true,
