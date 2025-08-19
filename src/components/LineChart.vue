@@ -37,14 +37,18 @@ const chartOptions: ChartOptions<'line'> = {
       ticks: {
         maxRotation: 45,
         minRotation: 45,
-        autoSkip: false,  // เลือกว่าจะข้าม label หรือไม่
+        autoSkip: false,  
+
       },
     },
-y: {
+    y: {
       min: 0,
       max: 20,  // กำหนด max เป็น 20
       ticks: {
         stepSize: 4, // ช่องไฟ 5 หน่วย
+        callback: function (value) {
+          return value + '%'; // ✅ เพิ่ม % ต่อท้ายทุก tick
+        },
       },
     },
   },
@@ -57,7 +61,7 @@ y: {
         weight: 'bold',
         size: 12,
       },
-      formatter: (value: number) => value.toString(),
+      formatter: (value: number) => value.toString() + '%',
       offset: 5,
       rotation: 320,
     },

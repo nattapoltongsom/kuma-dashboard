@@ -22,6 +22,7 @@ interface KOLPerformance {
   collect: number;
   erv: number;
   totalEngagement: number;
+  er:number
 }
 
 const loading = ref(true);
@@ -46,6 +47,7 @@ const processData = (data: string[][]) => {
     collect: parseNumber(row[9]),
     totalEngagement: parseNumber(row[10]),
     erv: parseNumber(row[11]),
+    er: parseNumber(row[12]),
   }));
 };
 
@@ -63,6 +65,17 @@ const barChartDataKolEngagement = computed<ChartData<'bar'>>(() => ({
     label: 'Total Engagement',
     backgroundColor: colorPalette,
     data: kols.value.map(g => g.totalEngagement),
+  }],
+}));
+
+const lineChartDataKolER = computed<ChartData<'line'>>(() => ({
+  labels: kols.value.map(g => g.kolName),
+  datasets: [{
+    label: 'ER (%)',
+    data: kols.value.map(g => g.er),
+    borderColor: '#b8e0d2',
+    backgroundColor: '#b8e0d2',
+    tension: 0.1,
   }],
 }));
 
@@ -140,11 +153,23 @@ const exportFullPagePDF = async () => {
       pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
     }
 
-    // ---------- หน้า 3: Line Chart ----------
-    const lineChartEl = document.querySelector('.chart-container:nth-of-type(2)') as HTMLElement;
-    if (lineChartEl) {
+    // ---------- หน้า 3.1: Line Chart ----------
+    const lineChartEr = document.querySelector('.chart-container:nth-of-type(2)') as HTMLElement;
+    if (lineChartEr) {
       pdf.addPage();
-      const canvas = await html2canvas(lineChartEl, { scale: 3 });
+      const canvas = await html2canvas(lineChartEr, { scale: 3 });
+      const imgData = canvas.toDataURL('image/png');
+      const imgProps = pdf.getImageProperties(imgData);
+      const imgWidth = pdfWidth - margin * 2;
+      const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+      pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
+    }
+
+        // ---------- หน้า 3.2: Line Chart ----------
+    const lineChartErv = document.querySelector('.chart-container:nth-of-type(3)') as HTMLElement;
+    if (lineChartErv) {
+      pdf.addPage();
+      const canvas = await html2canvas(lineChartErv, { scale: 3 });
       const imgData = canvas.toDataURL('image/png');
       const imgProps = pdf.getImageProperties(imgData);
       const imgWidth = pdfWidth - margin * 2;
@@ -157,7 +182,7 @@ const exportFullPagePDF = async () => {
     const head = [[
       'No.', 'KOL Name', 'Followers', 'Platform',
       'View', 'Likes', 'Comments', 'Shares', 'Save',
-      'Total Engagement', 'ERV (%)'
+      'Total Engagement', 'ER (%)', 'ERV (%)'
     ]];
 
     const body = kols.value.map(k => [
@@ -171,7 +196,8 @@ const exportFullPagePDF = async () => {
       k.share.toLocaleString(),
       k.collect.toLocaleString(),
       k.totalEngagement.toLocaleString(),
-      k.erv.toFixed(2),
+      k.er.toFixed(2) + '%',
+      k.erv.toFixed(2) + '%'
     ]);
 
     autoTable(pdf, {
@@ -184,7 +210,7 @@ const exportFullPagePDF = async () => {
       pageBreak: 'auto',
     });
 
-    pdf.save('Kuma Kato (KOLs Report).pdf');
+    pdf.save('Kuma kato (KOLs Report).pdf');
   } catch (error) {
     console.error('Export PDF failed:', error);
   } finally {
@@ -261,6 +287,7 @@ const exportFullPagePDF = async () => {
                 <th>Follower</th>
                 <th>Link Post</th>
                 <th>Total Engagement</th>
+                <th>ER%</th>
                 <th>ERV%</th>
               </tr>
             </thead>
@@ -272,6 +299,7 @@ const exportFullPagePDF = async () => {
                   <a :href="item.link" target="_blank" rel="noopener noreferrer">{{ item.link }}</a>
                 </td>
                 <td>{{ item.totalEngagement.toLocaleString() }}</td>
+                <td>{{ item.er.toFixed(2) }}%</td>
                 <td>{{ item.erv.toFixed(2) }}%</td>
               </tr>
             </tbody>
@@ -284,6 +312,10 @@ const exportFullPagePDF = async () => {
         <div class="chart-container" style="margin-top: 20px;">
           <h2>Engagement by KOLs</h2>
           <BarChart :chart-data="barChartDataKolEngagement" />
+        </div>
+        <div class="chart-container" style="margin-top: 20px;">
+          <h2>ER (%) by KOLs</h2>
+          <LineChart :chart-data="lineChartDataKolER" />
         </div>
         <div class="chart-container" style="margin-top: 20px;">
           <h2>ERV (%) by KOLs</h2>
@@ -307,6 +339,7 @@ const exportFullPagePDF = async () => {
               <th>Shares</th>
               <th>Save</th>
               <th>Total Engagement</th>
+              <th>ER (%)</th>
               <th>ERV (%)</th>
             </tr>
           </thead>
@@ -322,6 +355,7 @@ const exportFullPagePDF = async () => {
               <td>{{ kol.share.toLocaleString() }}</td>
               <td>{{ kol.collect.toLocaleString() }}</td>
               <td>{{ kol.totalEngagement.toLocaleString() }}</td>
+              <td>{{ kol.er.toFixed(2) }}%</td>
               <td>{{ kol.erv.toFixed(2) }}%</td>
             </tr>
           </tbody>
@@ -372,6 +406,7 @@ table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.7rem;
+
 }
 
 thead th {

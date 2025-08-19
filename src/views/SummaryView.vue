@@ -21,6 +21,7 @@ interface CampaignSummary {
   totalCollect: number
   avgERV: number;
   totalEngagement: number;
+  avgER:number
 }
 
 // ---- Component State ----
@@ -50,6 +51,7 @@ const processData = (data: string[][]) => {
     totalCollect: parseNumber(row[9]),
     totalEngagement: parseNumber(row[10]),
     avgERV: parseNumber(row[11]),
+    avgER: parseNumber(row[12]),
   }));
 };
 
@@ -102,6 +104,16 @@ const avgERVChartData = computed<ChartData<'line'>>(() => ({
     label: 'ERV(%)',
     data: campaigns.value.map(c => c.avgERV),
     borderColor: '#FF6384', 
+    tension: 0.3 
+  }]
+}));
+
+const avgERChartData = computed<ChartData<'line'>>(() => ({ 
+  labels: campaigns.value.map(c => c.campaignName),
+  datasets: [{
+    label: 'ER(%)',
+    data: campaigns.value.map(c => c.avgER),
+    borderColor: '#b8e0d2', 
     tension: 0.3 
   }]
 }));
@@ -172,15 +184,18 @@ const exportCampaignSummaryPDF = async () => {
     // ✅ หน้า 2: BarChart
     await exportSection('.page-2');
 
-    // ✅ หน้า 3: LineChart
+    // ✅ หน้า 3.2: LineChart
     await exportSection('.page-3');
+
+    // ✅ หน้า 3.1: LineChart
+    await exportSection('.page-4');
 
     // ✅ หน้า 4: ตาราง
     pdf.addPage('a4', 'landscape');
     autoTable(pdf, {
       head: [[
         'No.', 'Name', 'Total Kols', 'Platform', 'Total View', 'Total Likes',
-        'Total Comments', 'Total Shares', 'Total Save', 'Total Engagement', 'ERV (%)',
+        'Total Comments', 'Total Shares', 'Total Save', 'Total Engagement', 'ER (%)', 'ERV (%)'
       ]],
       body: campaigns.value.map(c => [
         c.no,
@@ -193,7 +208,8 @@ const exportCampaignSummaryPDF = async () => {
         c.totalShare.toLocaleString(),
         c.totalCollect.toLocaleString(),
         c.totalEngagement.toLocaleString(),
-        c.avgERV.toFixed(2) + '%',
+        c.avgER.toFixed(2) + '%',
+        c.avgERV.toFixed(2) + '%'
       ]),
       startY: margin,
       styles: { fontSize: 7 },
@@ -290,6 +306,13 @@ const exportCampaignSummaryPDF = async () => {
 
     <div class="pdf-page chart-page page-3">
       <div class="chart-container" style="margin-top: 20px;">
+          <h2>ER (%) by campaign</h2>
+          <LineChart :chart-data="avgERChartData" /> 
+        </div>
+    </div>  
+
+    <div class="pdf-page chart-page page-4">
+      <div class="chart-container" style="margin-top: 20px;">
           <h2>ERV (%) by campaign</h2>
           <LineChart :chart-data="avgERVChartData" /> 
         </div>
@@ -309,6 +332,7 @@ const exportCampaignSummaryPDF = async () => {
               <th>Total Shares</th>
               <th>Total Save</th>
               <th>Total Engagement</th>
+              <th>ER (%)</th>
               <th>ERV (%)</th>
             </tr>
           </thead>
@@ -331,6 +355,7 @@ const exportCampaignSummaryPDF = async () => {
               <td>{{ campaign.totalShare.toLocaleString() }}</td>
               <td>{{ campaign.totalCollect.toLocaleString() }}</td>
               <td>{{ campaign.totalEngagement.toLocaleString() }}</td>
+              <td>{{ campaign.avgER.toFixed(2) }}%</td>
               <td>{{ campaign.avgERV.toFixed(2) }}%</td>
             </tr>
           </tbody>
