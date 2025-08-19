@@ -407,4 +407,26 @@ button:disabled {
   cursor: not-allowed;
   opacity: 0.6;
 }
+
+.summary-cards-grid {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.summary-card {
+  flex: 1;
+  min-width: 120px;
+  background: #f9f9f9;
+  border-top: 6px solid;
+  padding: 12px;
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+}
+
+.summary-value {
+  font-size: 1.4em;
+  font-weight: 700;
+}
 </style>
