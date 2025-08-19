@@ -282,11 +282,11 @@ const exportFullPagePDF = async () => {
       <!-- หน้า 2: กราฟ ERV + Bar รวมใน div เดียว -->
       <div id="charts" style="margin-top: 30px;">
         <div class="chart-container" style="margin-top: 20px;">
-          <h2>Kols Engagement</h2>
+          <h2>Engagement by KOLs</h2>
           <BarChart :chart-data="barChartDataKolEngagement" />
         </div>
         <div class="chart-container" style="margin-top: 20px;">
-          <h2>ERV (%) by KOL Type</h2>
+          <h2>ERV (%) by KOLs</h2>
           <LineChart :chart-data="lineChartDataKolERV" />
         </div>
       </div>
