@@ -21,7 +21,8 @@ interface CampaignSummary {
   totalCollect: number
   avgERV: number;
   totalEngagement: number;
-  avgER:number
+  avgER:number;
+  lastUpdate?: string; 
 }
 
 // ---- Component State ----
@@ -29,6 +30,7 @@ const loading = ref(true);
 const error = ref<string | null>(null);
 const campaigns = ref<CampaignSummary[]>([]);
 const exporting = ref(false); // สถานะ export
+const lastUpdate = ref<string>(''); 
 
 // ---- Data Processing ----
 // ฟังก์ชันแปลงข้อมูล string จาก CSV ให้เป็น number และจัดการกับ '%'
@@ -38,7 +40,7 @@ const processData = (data: string[][]) => {
   console.log("data" ,data)
   const headers = data[0];
   const rows = data.slice(0);
-
+  lastUpdate.value = rows[0][13] || '';
   campaigns.value = rows.map(row => ({
     no: parseInt(row[0]),
     campaignName: row[1],
@@ -195,7 +197,7 @@ const exportCampaignSummaryPDF = async () => {
     autoTable(pdf, {
       head: [[
         'No.', 'Name', 'Total Kols', 'Platform', 'Total View', 'Total Likes',
-        'Total Comments', 'Total Shares', 'Total Save', 'Total Engagement', 'ER (%)', 'ERV (%)'
+        'Total Comments', 'Total Shares', 'Total Save', 'Total Engagement', 'Avg ER (%)', 'Avg ERV (%)'
       ]],
       body: campaigns.value.map(c => [
         c.no,
@@ -216,6 +218,20 @@ const exportCampaignSummaryPDF = async () => {
       headStyles: { fillColor: [100, 100, 255] },
       margin: { left: margin, right: margin },
       pageBreak: 'auto',
+      columnStyles: {
+        0: { halign: 'center' }, // No.
+        1: { halign: 'left' },   // Campaign Name
+        2: { halign: 'right' },  // total Kols
+        3: { halign: 'center' }, // Platform
+        4: { halign: 'right' },  // View
+        5: { halign: 'right' },  // Likes
+        6: { halign: 'right' },  // Comments
+        7: { halign: 'right' },  // Shares
+        8: { halign: 'right' },  // Save
+        9: { halign: 'right' },  // Total Engagement
+        10: { halign: 'right' }, // ER (%)
+        11: { halign: 'right' }, // ERV (%)
+      }
     });
 
     pdf.save('Summary Campaigns Kuma (Report).pdf');
@@ -232,8 +248,8 @@ const exportCampaignSummaryPDF = async () => {
 
 <template>
   <div class="page-container">
-    <h1>Campaigns Summary</h1>
-      <div class="export-button-wrapper">
+    <h1>Campaigns Summary</h1>     
+     <div class="export-button-wrapper">
         <button
           @click="exportCampaignSummaryPDF"
           class="btn-export"
@@ -246,6 +262,12 @@ const exportCampaignSummaryPDF = async () => {
           Refresh
         </button>
       </div>
+    <div 
+      v-if="lastUpdate" 
+      style="font-size:0.85rem; color:#888; margin-top:4px; text-align:right;"
+    >
+      (Last Update: {{ lastUpdate }})
+    </div> 
     <div v-if="loading" class="loading">Loading Data...</div>
     <div v-if="error" class="error">{{ error }}</div>
 
@@ -338,8 +360,8 @@ const exportCampaignSummaryPDF = async () => {
           </thead>
           <tbody>
             <tr v-for="campaign in campaigns" :key="campaign.no">
-              <td>{{ campaign.no }}</td>
-              <td>
+              <td style="text-align: left;">{{ campaign.no }}</td>
+              <td style="text-align: center;">
                 <router-link
                   :to="`/campaign-${campaign.no}`"
                   class="campaign-link"
@@ -347,16 +369,16 @@ const exportCampaignSummaryPDF = async () => {
                   {{ campaign.campaignName }}
                 </router-link>
               </td>
-              <td>{{ campaign.infoCount }}</td>
-              <td>{{ campaign.platform }}</td>
-              <td>{{ campaign.totalView.toLocaleString() }}</td>
-              <td>{{ campaign.totalLike.toLocaleString() }}</td>
-              <td>{{ campaign.totalComment.toLocaleString() }}</td>
-              <td>{{ campaign.totalShare.toLocaleString() }}</td>
-              <td>{{ campaign.totalCollect.toLocaleString() }}</td>
-              <td>{{ campaign.totalEngagement.toLocaleString() }}</td>
-              <td>{{ campaign.avgER.toFixed(2) }}%</td>
-              <td>{{ campaign.avgERV.toFixed(2) }}%</td>
+              <td style="text-align: right;">{{ campaign.infoCount }}</td>
+              <td style="text-align: center;">{{ campaign.platform }}</td>
+              <td style="text-align: right;">{{ campaign.totalView.toLocaleString() }}</td>
+              <td style="text-align: right;">{{ campaign.totalLike.toLocaleString() }}</td>
+              <td style="text-align: right;">{{ campaign.totalComment.toLocaleString() }}</td>
+              <td style="text-align: right;">{{ campaign.totalShare.toLocaleString() }}</td>
+              <td style="text-align: right;">{{ campaign.totalCollect.toLocaleString() }}</td>
+              <td style="text-align: right;">{{ campaign.totalEngagement.toLocaleString() }}</td>
+              <td style="text-align: right;">{{ campaign.avgER.toFixed(2) }}%</td>
+              <td style="text-align: right;">{{ campaign.avgERV.toFixed(2) }}%</td>
             </tr>
           </tbody>
         </table>

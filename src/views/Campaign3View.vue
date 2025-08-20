@@ -29,11 +29,13 @@ const loading = ref(true);
 const error = ref<string | null>(null);
 const kols = ref<KOLPerformance[]>([]);
 const exporting = ref(false);  // สถานะกำลัง export
+const lastUpdate = ref<string>(''); 
 
 const parseNumber = (text: string) => parseFloat(text.replace(/,|%/g, '')) || 0;
 
 const processData = (data: string[][]) => {
   const rows = data.slice(0);
+  lastUpdate.value = rows[0][13] || '';
   kols.value = rows.map(row => ({
     no: parseInt(row[0]),
     kolName: row[1],
@@ -180,7 +182,7 @@ const exportFullPagePDF = async () => {
     // ---------- หน้า 4: Table ----------
     pdf.addPage();
     const head = [[
-      'No.', 'KOL Name', 'Followers', 'Platform',
+      'No.', 'KOL Name', 'Followers', 'Platform', 'Link posts',
       'View', 'Likes', 'Comments', 'Shares', 'Save',
       'Total Engagement', 'ER (%)', 'ERV (%)'
     ]];
@@ -190,6 +192,7 @@ const exportFullPagePDF = async () => {
       k.kolName,
       k.follower,
       k.platform,
+      k.link,
       k.view.toLocaleString(),
       k.like.toLocaleString(),
       k.comment.toLocaleString(),
@@ -210,6 +213,21 @@ const exportFullPagePDF = async () => {
       },
       didDrawCell: (data) => {
         data.cell.height = 8; 
+      },
+      columnStyles: {
+      0: { halign: 'center' }, // No.
+      1: { halign: 'left' },   // KOL Name
+      2: { halign: 'right' },  // Followers
+      3: { halign: 'center' }, // Platform
+      4: { halign: 'left' },   // Link posts
+      5: { halign: 'right' },  // View
+      6: { halign: 'right' },  // Likes
+      7: { halign: 'right' },  // Comments
+      8: { halign: 'right' },  // Shares
+      9: { halign: 'right' },  // Save
+      10: { halign: 'right' },  // Total Engagement
+      11: { halign: 'right' }, // ER (%)
+      12: { halign: 'right' }, // ERV (%)
       }
     });
 
@@ -247,7 +265,12 @@ const exportFullPagePDF = async () => {
         <span v-else>Refresh</span>
       </button>
     </div>
-
+    <div 
+      v-if="lastUpdate" 
+      style="font-size:0.85rem; color:#888; margin-top:4px; text-align:right;"
+    >
+      (Last Update: {{ lastUpdate }})
+    </div> 
     <div v-if="loading" class="loading">Loading Data...</div>
     <div v-if="error" class="error">{{ error }}</div>
 
@@ -296,14 +319,14 @@ const exportFullPagePDF = async () => {
             </thead>
             <tbody>
               <tr v-for="item in topKOLsByEngagement" :key="item.no">
-                <td>{{ item.kolName }}</td>
-                <td>{{ item.follower }}</td>
-                <td>
+                <td style="text-align: left;">{{ item.kolName }}</td>
+                <td style="text-align: center;">{{ item.follower }}</td>
+                <td style="text-align: left;">
                   <a :href="item.link" target="_blank" rel="noopener noreferrer">{{ item.link }}</a>
                 </td>
-                <td>{{ item.totalEngagement.toLocaleString() }}</td>
-                <td>{{ item.er.toFixed(2) }}%</td>
-                <td>{{ item.erv.toFixed(2) }}%</td>
+                <td style="text-align: right;">{{ item.totalEngagement.toLocaleString() }}</td>
+                <td style="text-align: right;">{{ item.er.toFixed(2) }}%</td>
+                <td style="text-align: right;">{{ item.erv.toFixed(2) }}%</td>
               </tr>
             </tbody>
           </table>
@@ -332,10 +355,11 @@ const exportFullPagePDF = async () => {
         <table>
           <thead>
             <tr>
-              <th>No.</th>
-              <th>KOL Name</th>
-              <th>Followers</th>
-              <th>Platform</th>
+              <th style="min-width: 30px;">No.</th>
+              <th style="min-width: 100px; text-align: left;">KOL Name</th>
+              <th style="min-width: 80px;">Followers</th>
+              <th style="min-width: 60px;">Platform</th>
+              <th style="max-width: 150px; word-break: break-word; text-align: center;">Link posts</th>
               <th>View</th>
               <th>Likes</th>
               <th>Comments</th>
@@ -348,18 +372,29 @@ const exportFullPagePDF = async () => {
           </thead>
           <tbody>
             <tr v-for="kol in kols" :key="kol.no">
-              <td>{{ kol.no }}</td>
-              <td>{{ kol.kolName }}</td>
-              <td>{{ kol.follower }}</td>
-              <td>{{ kol.platform }}</td>
-              <td>{{ kol.view.toLocaleString() }}</td>
-              <td>{{ kol.like.toLocaleString() }}</td>
-              <td>{{ kol.comment.toLocaleString() }}</td>
-              <td>{{ kol.share.toLocaleString() }}</td>
-              <td>{{ kol.collect.toLocaleString() }}</td>
-              <td>{{ kol.totalEngagement.toLocaleString() }}</td>
-              <td>{{ kol.er.toFixed(2) }}%</td>
-              <td>{{ kol.erv.toFixed(2) }}%</td>
+              <td style="text-align: left;">{{ kol.no }}</td>
+              <td style="text-align: left;">{{ kol.kolName }}</td>
+              <td style="text-align: center;">{{ kol.follower }}</td>
+              <td style="text-align: center;">{{ kol.platform }}</td>
+              <td style="max-width: 150px; word-break: break-word; text-align: left;">
+               <a 
+                  :href="kol.link" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  class="link-cell"
+                  style="color: black;"
+                >
+                  {{ kol.link }}
+                </a>
+              </td>
+              <td style="text-align: right;">{{ kol.view.toLocaleString() }}</td>
+              <td style="text-align: right;">{{ kol.like.toLocaleString() }}</td>
+              <td style="text-align: right;">{{ kol.comment.toLocaleString() }}</td>
+              <td style="text-align: right;">{{ kol.share.toLocaleString() }}</td>
+              <td style="text-align: right;">{{ kol.collect.toLocaleString() }}</td>
+              <td style="text-align: right;">{{ kol.totalEngagement.toLocaleString() }}</td>
+              <td style="text-align: right;">{{ kol.er.toFixed(2) }}%</td>
+              <td style="text-align: right;">{{ kol.erv.toFixed(2) }}%</td>
             </tr>
           </tbody>
         </table>
@@ -456,6 +491,15 @@ tbody tr:hover {
   padding: 12px;
   border-radius: 6px;
   box-shadow: var(--shadow);
+}
+
+.link-cell {
+  display: inline-block;
+  max-width: 150px; /* กำหนดความกว้าง */
+  overflow: hidden;
+  text-overflow: ellipsis; /* ถ้าเกินจะเป็น ... */
+  white-space: nowrap; /* ใช้ nowrap กับ ellipsis */
+  vertical-align: middle;
 }
 
 /* ปุ่ม pagination เอาออก เพราะไม่ใช้ */
