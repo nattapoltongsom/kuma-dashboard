@@ -203,11 +203,14 @@ const exportFullPagePDF = async () => {
     autoTable(pdf, {
       head,
       body,
-      startY: margin,
-      styles: { fontSize: 7 },
-      headStyles: { fillColor: [100, 100, 255] },
-      margin: { left: margin, right: margin },
-      pageBreak: 'auto',
+      styles: {
+        fontSize: 7,
+        halign: 'center',
+        minCellHeight: 8,  
+      },
+      didDrawCell: (data) => {
+        data.cell.height = 8; 
+      }
     });
 
     pdf.save('Kuma kato (KOLs Report).pdf');
@@ -310,15 +313,15 @@ const exportFullPagePDF = async () => {
       <!-- หน้า 2: กราฟ ERV + Bar รวมใน div เดียว -->
       <div id="charts" style="margin-top: 30px;">
         <div class="chart-container" style="margin-top: 20px;">
-          <h2>Engagement by KOLs</h2>
+          <h2>Total Engagement</h2>
           <BarChart :chart-data="barChartDataKolEngagement" />
         </div>
         <div class="chart-container" style="margin-top: 20px;">
-          <h2>ER (%) by KOLs</h2>
+          <h2>Engagement rate (ER%)</h2>
           <LineChart :chart-data="lineChartDataKolER" />
         </div>
         <div class="chart-container" style="margin-top: 20px;">
-          <h2>ERV (%) by KOLs</h2>
+          <h2>Engagement rate per view (ERV%)</h2>
           <LineChart :chart-data="lineChartDataKolERV" />
         </div>
       </div>
