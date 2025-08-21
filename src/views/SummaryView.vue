@@ -197,6 +197,9 @@ const exportCampaignSummaryPDF = async () => {
     // ✅ หน้า 2: Top Rankings 
     await exportSection('.page-2', false, true);  
 
+    // ✅ หน้า 3: BarChart
+    await exportSection('.page-3');
+
     // ✅ หน้า 4: LineChart
     await exportSection('.page-4');
 
