@@ -31,6 +31,8 @@ const error = ref<string | null>(null);
 const campaigns = ref<CampaignSummary[]>([]);
 const exporting = ref(false); // สถานะ export
 const lastUpdate = ref<string>(''); 
+const cpv = ref<string>(''); // ค่า CPV (Cost Per View) ที่จะใช้ใน future features
+const cpe = ref<string>(''); // ค่า CPE (Cost Per Engagement) ที่จะใช้ใน future features
 
 // ---- Data Processing ----
 // ฟังก์ชันแปลงข้อมูล string จาก CSV ให้เป็น number และจัดการกับ '%'
@@ -40,7 +42,8 @@ const processData = (data: string[][]) => {
   console.log("data" ,data)
   const headers = data[0];
   const rows = data.slice(0);
-  lastUpdate.value = rows[0][13] || '';
+  lastUpdate.value = rows[0][14] || '';
+  const cost = parseNumber(rows[0][13]);
   campaigns.value = rows.map(row => ({
     no: parseInt(row[0]),
     campaignName: row[1],
@@ -55,6 +58,13 @@ const processData = (data: string[][]) => {
     avgERV: parseNumber(row[11]),
     avgER: parseNumber(row[12]),
   }));
+
+  if (campaigns.value.length > 0) {
+    const totalView = campaigns.value.reduce((sum, c) => sum + c.totalView, 0);
+    const totalEngagement = campaigns.value.reduce((sum, c) => sum + c.totalEngagement, 0);
+    cpv.value = totalView > 0 ? (cost / totalView).toFixed(2) : '0.00';
+    cpe.value = totalEngagement > 0 ? (cost / totalEngagement).toFixed(2) : '0.00';
+  }
 };
 
 // ---- Top 5 Rankings (Computed Properties) ----
@@ -166,7 +176,7 @@ const exportCampaignSummaryPDF = async () => {
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const margin = 5;
 
-    const exportSection = async (selector: string, isFirstPage = false) => {
+    const exportSection = async (selector: string, isFirstPage = false, center = false) => {
       const element = document.querySelector(selector) as HTMLElement;
       if (!element) return;
 
@@ -176,23 +186,24 @@ const exportCampaignSummaryPDF = async () => {
       const width = pdfWidth - margin * 2;
       const height = (props.height * width) / props.width;
 
+      const x = center ? (pdf.internal.pageSize.getWidth() - width) / 2 : margin;
+      const y = center ? (pdf.internal.pageSize.getHeight() - height) / 2 : margin;
       if (!isFirstPage) pdf.addPage('a4', 'landscape');
-      pdf.addImage(img, 'PNG', margin, margin, width, height);
-    };
+      pdf.addImage(img, 'PNG', x, y, width, height);    };
 
     // ✅ หน้า 1: Summary
-    await exportSection('.page-1', true);
+    await exportSection('.page-1', true, true);
 
-    // ✅ หน้า 2: BarChart
-    await exportSection('.page-2');
+    // ✅ หน้า 2: Top Rankings 
+    await exportSection('.page-2', false, true);  
 
-    // ✅ หน้า 3.2: LineChart
-    await exportSection('.page-3');
-
-    // ✅ หน้า 3.1: LineChart
+    // ✅ หน้า 4: LineChart
     await exportSection('.page-4');
 
-    // ✅ หน้า 4: ตาราง
+    // ✅ หน้า 5: LineChart
+    await exportSection('.page-5');
+
+    // ✅ หน้า 6: ตาราง
     pdf.addPage('a4', 'landscape');
     autoTable(pdf, {
       head: [[
@@ -275,37 +286,51 @@ const exportCampaignSummaryPDF = async () => {
       <div class="pdf-page page-1">
         <div class="summary-cards-grid">
           <div class="summary-card" style="border-top-color: var(--pastel-yellow);">
-            <h3>Total <br>Engagement</h3>
+            <h3>Total Engagement</h3>
             <p class="summary-value">{{ totalSummary.totalEngagement.toLocaleString() }}</p>
           </div>
           <div class="summary-card" style="border-top-color: var(--pastel-green);">
-            <h3>Total <br>View</h3>
+            <h3>Total View</h3>
             <p class="summary-value">{{ totalSummary.totalView.toLocaleString() }}</p>
           </div>
+        </div>
+        <div class="summary-cards-grid">
           <div class="summary-card" style="border-top-color: var(--pastel-blue);">
-            <h3>Total<br>Likes</h3>
+            <h3>Total Likes</h3>
             <p class="summary-value">{{ totalSummary.totalLike.toLocaleString() }}</p>
           </div>
           <div class="summary-card" style="border-top-color: var(--pastel-pink);">
-            <h3>Total <br>Comments</h3>
+            <h3>Total Comments</h3>
             <p class="summary-value">{{ totalSummary.totalComment.toLocaleString() }}</p>
           </div>
           <div class="summary-card" style="border-top-color: var(--pastel-yellow);">
-            <h3>Total <br>Shares</h3>
+            <h3>Total Shares</h3>
             <p class="summary-value">{{ totalSummary.totalShare.toLocaleString() }}</p>
           </div>
               <div class="summary-card" style="border-top-color: var(--pastel-green);">
-            <h3>Total <br>Save</h3>
+            <h3>Total Save</h3>
             <p class="summary-value">{{ totalSummary.totalCollect.toLocaleString() }}</p>
           </div>
         </div>
-        <div class="grid-container top-rankings-grid">
+         <div class="summary-cards-grid">
+          <div class="summary-card" style="border-top-color: var(--pastel-blue);">
+            <h3>Cost per Engagement</h3>
+            <p class="summary-value">{{ cpe }} ฿</p>
+          </div>
+          <div class="summary-card" style="border-top-color: var(--pastel-pink);">
+            <h3>Cost per View</h3>
+            <p class="summary-value">{{ cpv }} ฿</p>
+          </div>
+        </div>
+      </div>
+    <div class="pdf-page page-2">
+      <div class="grid-container top-rankings-grid">
           <div class="ranking-card">
-            <h2>Engagement ratio</h2>
+            <h2>Engagement rate by campaign</h2>
             <PieChart :chart-data="pieChartDataEngagementRatio" />
           </div>
           <div class="ranking-card">
-            <h2>Top 5 Campaign by Engagement</h2>
+            <h2>Total enganement by Campaign</h2>
             <router-link
                 v-for="item in topByEngagement"
                 :key="item.no"
@@ -317,23 +342,22 @@ const exportCampaignSummaryPDF = async () => {
             </router-link>
           </div>
         </div>
-      </div>
-
-    <div class="pdf-page chart-page page-2">
+    </div>  
+    <div class="pdf-page chart-page page-3">
         <div class="chart-container" style="margin-top: 20px;">
           <h2>Total by campaign</h2>
           <BarChart :chart-data="barChartData" />
         </div>
     </div>  
 
-    <div class="pdf-page chart-page page-3">
+    <div class="pdf-page chart-page page-4">
       <div class="chart-container" style="margin-top: 20px;">
           <h2>ER (%) by campaign</h2>
           <LineChart :chart-data="avgERChartData" /> 
         </div>
     </div>  
 
-    <div class="pdf-page chart-page page-4">
+    <div class="pdf-page chart-page page-5">
       <div class="chart-container" style="margin-top: 20px;">
           <h2>ERV (%) by campaign</h2>
           <LineChart :chart-data="avgERVChartData" /> 
@@ -457,25 +481,33 @@ button:disabled {
   opacity: 0.6;
 }
 
+
 .summary-cards-grid {
   display: flex;
-  gap: 12px;
+  gap: 8px; /* ปรับลดระยะห่างระหว่างการ์ดให้แคบลง */
   flex-wrap: wrap;
-  margin-bottom: 20px;
+  margin-bottom: 12px; /* ปรับลดระยะห่างด้านล่างให้แคบลง */
 }
 
 .summary-card {
   flex: 1;
-  min-width: 120px;
+  min-width: 100px;
   background: #f9f9f9;
-  border-top: 6px solid;
-  padding: 12px;
-  border-radius: 6px;
+  border-top: 4px solid; /* ลดขนาดเส้นขอบด้านบน */
+  padding: 8px; /* ลดระยะห่าง padding ด้านใน */
+  border-radius: 4px; /* ลดรัศมีของมุม */
   box-shadow: var(--shadow);
 }
 
+.summary-card h3 {
+  font-size: 0.8em; /* ลดขนาดฟอนต์ของหัวข้อ */
+  margin: 0;
+  line-height: 1.2; /* ปรับระยะห่างระหว่างบรรทัดให้ชิดกันขึ้น */
+}
+
 .summary-value {
-  font-size: 1.4em;
+  font-size: 1.1em; /* ลดขนาดฟอนต์ของตัวเลข */
   font-weight: 700;
+  margin-top: 4px; /* ปรับระยะห่างด้านบนให้แคบลง */
 }
 </style>
