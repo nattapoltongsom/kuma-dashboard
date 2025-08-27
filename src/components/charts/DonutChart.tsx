@@ -93,7 +93,10 @@ export default function DonutChart({
   innerRadiusPct = 60,
 }: Props) {
   const { total, enriched } = useMemo(() => {
-    const total = Math.max(0, data.reduce((s, d) => s + (d.value || 0), 0));
+    const total = Math.max(
+      0,
+      data.reduce((s, d) => s + (d.value || 0), 0),
+    );
     const enriched = total
       ? data.map((d) => ({ ...d, __percent: (d.value / total) * 100 }))
       : data.map((d) => ({ ...d, __percent: 0 }));
@@ -154,13 +157,21 @@ export default function DonutChart({
 
                   <div className="space-y-1.5 max-h-[calc(100%-3rem)] overflow-auto pr-1">
                     {enriched.map((it, i) => (
-                      <div key={it.name} className="flex items-center justify-between text-sm">
+                      <div
+                        key={it.name}
+                        className="flex items-center justify-between text-sm"
+                      >
                         <div className="flex items-center gap-2 min-w-0">
                           <span
                             className="inline-block h-2.5 w-2.5 rounded-full"
-                            style={{ backgroundColor: colors[i % colors.length] }}
+                            style={{
+                              backgroundColor: colors[i % colors.length],
+                            }}
                           />
-                          <span className="truncate text-gray-700" title={it.name}>
+                          <span
+                            className="truncate text-gray-700"
+                            title={it.name}
+                          >
                             {it.name}
                           </span>
                         </div>

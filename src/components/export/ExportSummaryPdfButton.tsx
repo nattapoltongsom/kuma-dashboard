@@ -165,7 +165,7 @@ export default function ExportSummaryPdfButton({
 }) {
   const [loading, setLoading] = React.useState(false);
 
-  const TITLE_Y = 40; 
+  const TITLE_Y = 40;
 
   const flushPaint = React.useCallback(async () => {
     await new Promise<void>((r) => requestAnimationFrame(() => r()));
@@ -299,7 +299,7 @@ export default function ExportSummaryPdfButton({
         ],
         body,
         foot,
-        startY: 50, 
+        startY: 50,
         theme: "grid",
         styles: {
           fontSize: 8,

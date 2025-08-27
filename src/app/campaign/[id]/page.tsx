@@ -100,23 +100,26 @@ export default async function CampaignPage({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard 
-            title="Total Likes" 
-            value={totalLikes.toLocaleString()} 
-            align="center" />
+          <StatCard
+            title="Total Likes"
+            value={totalLikes.toLocaleString()}
+            align="center"
+          />
           <StatCard
             title="Total Comments"
             value={totalComments.toLocaleString()}
             align="center"
           />
-          <StatCard 
-            title="Total Shares" 
-            value={totalShares.toLocaleString()} 
-            align="center"/>
-          <StatCard 
-            title="Total Save" 
-            value={totalSave.toLocaleString()} 
-            align="center" />
+          <StatCard
+            title="Total Shares"
+            value={totalShares.toLocaleString()}
+            align="center"
+          />
+          <StatCard
+            title="Total Save"
+            value={totalSave.toLocaleString()}
+            align="center"
+          />
         </div>
 
         <Top5Table rows={rows} />

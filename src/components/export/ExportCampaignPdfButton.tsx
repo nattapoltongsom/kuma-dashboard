@@ -26,7 +26,7 @@ function addFittedImage(
   dataUrl: string,
   imgWpx: number,
   imgHpx: number,
-  margin = 10
+  margin = 10,
 ) {
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
@@ -45,7 +45,9 @@ function addFittedImage(
 }
 
 async function captureByExportId(exportId: string, targetW = 1600) {
-  const el = document.querySelector<HTMLElement>(`[data-export-id="${exportId}"]`);
+  const el = document.querySelector<HTMLElement>(
+    `[data-export-id="${exportId}"]`,
+  );
   if (!el) throw new Error(`Element not found: ${exportId}`);
 
   const rect = el.getBoundingClientRect();
@@ -107,7 +109,7 @@ async function loadLogo(logoSrc: string) {
 function drawLogoTopRight(
   doc: jsPDF,
   logo: { dataUrl: string; format: "PNG" | "JPEG"; w: number; h: number },
-  options?: { widthMm?: number; marginMm?: number }
+  options?: { widthMm?: number; marginMm?: number },
 ) {
   const pageW = doc.internal.pageSize.getWidth();
   const { widthMm = 16, marginMm = 6 } = options || {};
@@ -273,9 +275,16 @@ export default function ExportCampaignPdfButton({
           if (data.section === "body" && data.column.index === 4) {
             const raw = (data.cell as any).raw;
             const textArr = (data.cell as any).text as string[] | undefined;
-            const url = typeof raw === "string" ? raw : (textArr?.join(" ") ?? "");
+            const url =
+              typeof raw === "string" ? raw : (textArr?.join(" ") ?? "");
             if (url && /^https?:\/\//i.test(url)) {
-              doc.link(data.cell.x, data.cell.y, data.cell.width, data.cell.height, { url });
+              doc.link(
+                data.cell.x,
+                data.cell.y,
+                data.cell.width,
+                data.cell.height,
+                { url },
+              );
             }
           }
         },

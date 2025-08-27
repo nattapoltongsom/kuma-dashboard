@@ -35,7 +35,8 @@ function toPlatform(raw: any): Platform {
 
 export async function getSummaryRows(): Promise<SummaryRow[]> {
   const rows = await fetchCsvRows("Summary");
-  return rows.slice(0,1) // Todo: update
+  return rows
+    .slice(0, 1) // Todo: update
     .map((r) => ({
       id: toNum(r[0]),
       name: r[1] ?? "",
