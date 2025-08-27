@@ -8,6 +8,7 @@ import {
   Cell,
   Tooltip,
   Legend,
+  Label,
 } from "recharts";
 
 type Slice = { name: string; value: number };
@@ -33,8 +34,6 @@ const DEFAULT_COLORS = [
   "#f97316",
 ];
 
-const Tick = { fontSize: 12, fill: "#6b7280" };
-
 function TooltipCard({ active, payload }: any) {
   if (!active || !payload?.length) return null;
   const p = payload[0];
@@ -59,7 +58,9 @@ function TooltipCard({ active, payload }: any) {
       </div>
       <div className="text-gray-600 mt-0.5">
         Share:{" "}
-        <span className="font-medium text-gray-900">{percent.toFixed(1)}%</span>
+        <span className="font-medium text-gray-900">
+          {percent.toFixed(1)}%
+        </span>
       </div>
     </div>
   );
@@ -68,19 +69,27 @@ function TooltipCard({ active, payload }: any) {
 function LegendPills({ payload }: any) {
   if (!payload?.length) return null;
   return (
-    <div className="flex flex-wrap gap-2 text-xs">
-      {payload.map((it: any) => (
-        <span
-          key={it.value}
-          className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 ring-1 ring-gray-200 bg-white text-gray-700"
-        >
+    <div className="flex flex-wrap gap-2 text-xs justify-end">
+      {payload.map((it: any, i: number) => {
+        const pct =
+          typeof it?.payload?.__percent === "number"
+            ? it.payload.__percent
+            : 0;
+        return (
           <span
-            className="inline-block w-2.5 h-2.5 rounded-full"
-            style={{ backgroundColor: it.color }}
-          />
-          {it.value}
-        </span>
-      ))}
+            key={`${it.value}-${i}`}
+            className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 ring-1 ring-gray-200 bg-white text-gray-700"
+            title={`${it.value} — ${pct.toFixed(1)}%`}
+          >
+            <span
+              className="inline-block w-2.5 h-2.5 rounded-full"
+              style={{ backgroundColor: it.color }}
+            />
+            {it.value}
+            <span className="text-gray-500">({pct.toFixed(1)}%)</span>
+          </span>
+        );
+      })}
     </div>
   );
 }
@@ -93,10 +102,7 @@ export default function DonutChart({
   innerRadiusPct = 60,
 }: Props) {
   const { total, enriched } = useMemo(() => {
-    const total = Math.max(
-      0,
-      data.reduce((s, d) => s + (d.value || 0), 0),
-    );
+    const total = Math.max(0, data.reduce((s, d) => s + (d.value || 0), 0));
     const enriched = total
       ? data.map((d) => ({ ...d, __percent: (d.value / total) * 100 }))
       : data.map((d) => ({ ...d, __percent: 0 }));
@@ -113,77 +119,70 @@ export default function DonutChart({
 
         <div style={{ height: h }}>
           {hasData ? (
-            <div className="flex h-full gap-4">
-              {/* ซ้าย: กราฟโดนัท */}
-              <div className="flex-1">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RPieChart>
-                    <Legend
-                      verticalAlign="bottom"
-                      align="center"
-                      wrapperStyle={{ marginTop: 8 }}
-                      content={<LegendPills />}
+            <ResponsiveContainer width="100%" height="100%">
+              <RPieChart>
+                <Legend
+                  verticalAlign="top"
+                  align="right"
+                  content={<LegendPills />}
+                />
+                <Tooltip content={<TooltipCard />} />
+                <Pie
+                  data={enriched}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={`${innerRadiusPct}%`}
+                  outerRadius="90%"
+                  paddingAngle={1.5}
+                  stroke="#ffffff"
+                  strokeWidth={1}
+                  isAnimationActive={false}
+                >
+                  {enriched.map((entry, idx) => (
+                    <Cell
+                      key={`slice-${entry.name}-${idx}`}
+                      fill={colors[idx % colors.length]}
                     />
-                    <Tooltip content={<TooltipCard />} />
-                    <Pie
-                      data={enriched}
-                      dataKey="value"
-                      nameKey="name"
-                      innerRadius={`${innerRadiusPct}%`}
-                      outerRadius="90%"
-                      paddingAngle={1.5}
-                      stroke="#ffffff"
-                      strokeWidth={1}
-                      isAnimationActive={false}
-                    >
-                      {enriched.map((entry, idx) => (
-                        <Cell
-                          key={`slice-${entry.name}-${idx}`}
-                          fill={colors[idx % colors.length]}
-                        />
-                      ))}
-                    </Pie>
-                  </RPieChart>
-                </ResponsiveContainer>
-              </div>
+                  ))}
 
-              {/* ขวา: Summary Panel (ไม่บังกราฟตอน export) */}
-              <aside className="w-56 shrink-0">
-                <div className="h-full rounded-xl border bg-white p-4 ring-1 ring-gray-100">
-                  <div className="text-xs text-gray-500">Total</div>
-                  <div className="text-2xl font-semibold text-gray-900 mb-3">
-                    {total.toLocaleString()}
-                  </div>
-
-                  <div className="space-y-1.5 max-h-[calc(100%-3rem)] overflow-auto pr-1">
-                    {enriched.map((it, i) => (
-                      <div
-                        key={it.name}
-                        className="flex items-center justify-between text-sm"
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span
-                            className="inline-block h-2.5 w-2.5 rounded-full"
-                            style={{
-                              backgroundColor: colors[i % colors.length],
-                            }}
-                          />
-                          <span
-                            className="truncate text-gray-700"
-                            title={it.name}
+                  <Label
+                    content={(props) => {
+                      const { cx, cy } = (props.viewBox || {}) as {
+                        cx: number;
+                        cy: number;
+                      };
+                      if (typeof cx !== "number" || typeof cy !== "number")
+                        return null;
+                      return (
+                        <g pointerEvents="none">
+                          <text
+                            x={cx}
+                            y={cy - 8}
+                            textAnchor="middle"
+                            dominantBaseline="middle"
+                            fill="#6b7280"
+                            fontSize={12}
                           >
-                            {it.name}
-                          </span>
-                        </div>
-                        <div className="ml-2 text-gray-900 font-medium tabular-nums">
-                          {(it.__percent as number).toFixed(1)}%
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </aside>
-            </div>
+                            Total
+                          </text>
+                          <text
+                            x={cx}
+                            y={cy + 10}
+                            textAnchor="middle"
+                            dominantBaseline="middle"
+                            fill="#111827"
+                            fontSize={18}
+                            fontWeight={600}
+                          >
+                            {total.toLocaleString()}
+                          </text>
+                        </g>
+                      );
+                    }}
+                  />
+                </Pie>
+              </RPieChart>
+            </ResponsiveContainer>
           ) : (
             <div className="flex h-full items-center justify-center text-gray-500">
               No data
