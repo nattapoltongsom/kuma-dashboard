@@ -260,9 +260,7 @@ export default function ExportCampaignPdfButton({
         alternateRowStyles: { fillColor: [250, 250, 250] },
         margin: { left: 6, right: 6, top: 12, bottom: 10 },
         tableWidth: "auto",
-        columnStyles: {
-          10: { cellWidth: 22, halign: "right" },
-        },
+        columnStyles: {},
         didParseCell: (data) => {
           if (data.section === "body") {
             const rightCols = [0, 2, 5, 6, 7, 8, 9, 10, 11, 12];
