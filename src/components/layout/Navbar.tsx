@@ -24,7 +24,7 @@ export default function Navbar({ onMenu }: { onMenu: () => void }) {
             height={50}
             className="rounded"
           />
-          <span className="font-semibold bg-gradient-to-r from-sky-300 via-orange-400 via-pink-400 to-emerald-600 bg-clip-text text-transparent">
+          <span className="font-semibold bg-gradient-to-r from-sky-300 via-pink-400 to-emerald-600 bg-clip-text text-transparent">
             Dashboard
           </span>
         </div>

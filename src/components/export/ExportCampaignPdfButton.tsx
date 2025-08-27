@@ -258,6 +258,9 @@ export default function ExportCampaignPdfButton({
         alternateRowStyles: { fillColor: [250, 250, 250] },
         margin: { left: 6, right: 6, top: 12, bottom: 10 },
         tableWidth: "auto",
+        columnStyles: {
+          10: { cellWidth: 22, halign: "right" },
+        },
         didParseCell: (data) => {
           if (data.section === "body") {
             const rightCols = [0, 2, 5, 6, 7, 8, 9, 10, 11, 12];
@@ -273,16 +276,6 @@ export default function ExportCampaignPdfButton({
             const url = typeof raw === "string" ? raw : (textArr?.join(" ") ?? "");
             if (url && /^https?:\/\//i.test(url)) {
               doc.link(data.cell.x, data.cell.y, data.cell.width, data.cell.height, { url });
-              const prev = doc.getDrawColor();
-              doc.setDrawColor(37, 99, 235);
-              doc.setLineWidth(0.2);
-              doc.line(
-                data.cell.x + 1,
-                data.cell.y + data.cell.height - 1.2,
-                data.cell.x + data.cell.width - 1,
-                data.cell.y + data.cell.height - 1.2
-              );
-              doc.setDrawColor(prev as any);
             }
           }
         },
