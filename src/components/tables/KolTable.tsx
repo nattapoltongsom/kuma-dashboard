@@ -43,8 +43,8 @@ export default function KolTable({ rows }: { rows: KolComputed[] }) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [query, setQuery] = useState("");
-  const [sortKey, setSortKey] = useState<SortKey>("totalEngagement");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [sortKey, setSortKey] = useState<SortKey>("id");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();

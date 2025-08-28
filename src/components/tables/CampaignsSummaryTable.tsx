@@ -42,8 +42,8 @@ export default function CampaignsSummaryTable({
   rows: SummaryRow[];
   title?: string;
 }) {
-  const [sortKey, setSortKey] = useState<SortKey>("totalEngagement");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [sortKey, setSortKey] = useState<SortKey>("id");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
   const sorted = useMemo(() => {
     const data = [...rows];
